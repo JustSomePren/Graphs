@@ -18,7 +18,7 @@ export function htmlToText(html) {
     .replace(/<\/(p|div|tr|li|h\d|br)>|<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
-    .replace(/&amp;/g, '&')
+    .replace(/&amp;|&#0*38;|&#x26;/gi, '&')
     .replace(/&#8217;|&#x2019;|&rsquo;/gi, "'")
     .replace(/&#8220;|&#8221;|&#x201c;|&#x201d;|&ldquo;|&rdquo;/gi, '"')
     .replace(/&#8212;|&#8211;|&#x2014;|&#x2013;|&mdash;|&ndash;/gi, '–')

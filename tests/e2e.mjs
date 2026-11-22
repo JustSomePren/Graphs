@@ -15,6 +15,9 @@ let failed = 0
 
 async function test(name, fn) {
   const context = await browser.newContext(PIXEL)
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: url })
+  // V testech chceme sdílení přes schránku, ne systémový dialog
+  await context.addInitScript(() => delete Navigator.prototype.share)
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -129,15 +132,32 @@ await test('rychlá hra: anonymní firma a odhalení jména', async (page) => {
   const before = await page.locator('main').innerText()
   assert.ok(before.includes('Anonymní firma'), 'chybí anonymní označení')
   await page.click('.tabs button:has-text("Konkurence")')
-  assert.ok((await page.locator('.peers').innerText()).includes('Tato firma'))
+  assert.ok((await page.locator('.peers').innerText()).includes('Tato firma'), 'v konkurenci chybí „Tato firma“')
   assert.equal(await page.locator('.pane a').count(), 0, 'odkaz na SEC by prozradil firmu')
   await drawFinger(page, () => 0.42)
   await page.click('.primary')
   await page.waitForSelector('.result')
   assert.match(await page.locator('.result').innerText(), /Šlo o .+\([A-Z.]+\)/)
   await page.click('.primary:has-text("Další firma")')
-  await page.waitForSelector('canvas')
-  assert.ok((await page.locator('main').innerText()).includes('Anonymní firma'))
+  await page.waitForSelector('.result', { state: 'detached' })
+  assert.ok((await page.locator('main').innerText()).includes('Anonymní firma'), 'další firma není anonymní')
+})
+
+await test('rychlá hra: 10 náhodných firem za sebou (různé části datasetu)', async (page) => {
+  await page.click('.segmented.big button:has-text("Rychlá hra")')
+  await page.click('.quick .primary')
+  const seen = new Set()
+  for (let i = 0; i < 10; i++) {
+    await page.waitForSelector('.toolbar')
+    seen.add(await page.locator('.topbar small').innerText())
+    await drawFinger(page, (t) => 0.45 - 0.05 * t)
+    await page.click('.primary')
+    await page.waitForSelector('.result')
+    assert.match(await page.locator('.result').innerText(), /Šlo o /)
+    await page.click('.primary:has-text("Další firma")')
+    await page.waitForSelector('.result', { state: 'detached' })
+  }
+  assert.ok(seen.size >= 8, `málo různých scénářů: ${seen.size}`)
 })
 
 await test('profil: hodnost, odznaky a historie po hře', async (page) => {
@@ -151,6 +171,73 @@ await test('profil: hodnost, odznaky a historie po hře', async (page) => {
   assert.equal(await page.locator('.badge-icon:not(.locked)').count() >= 1, true)
   await page.click('.profile .link')
   assert.equal(await page.locator('.history .row').count(), 1)
+})
+
+await test('přehled: klíčová čísla, roční rozpětí a signály', async (page) => {
+  await page.click('.scenario:has-text("Target")')
+  assert.equal(await page.locator('.tile').count(), 8)
+  assert.equal(await page.locator('.range').count(), 1)
+  assert.ok((await page.locator('.signals li').count()) >= 8)
+  assert.match(await page.locator('.pane').innerText(), /pozitivních · \d+ neutrálních · \d+ negativních/)
+})
+
+await test('pásmo běžného pohybu se zapne a zapamatuje', async (page) => {
+  await page.click('.scenario:has-text("Target")')
+  const band = page.locator('[aria-label="Pásmo běžného pohybu"]')
+  await band.click()
+  assert.equal(await band.getAttribute('aria-pressed'), 'true')
+  await page.click('[aria-label="Zpět na seznam"]')
+  await page.click('.scenario:has-text("Boeing")')
+  assert.equal(await page.locator('[aria-label="Pásmo běžného pohybu"]').getAttribute('aria-pressed'), 'true')
+})
+
+await test('sdílení výsledku a srovnání s rovnou čárou', async (page) => {
+  await page.click('.scenario >> nth=1')
+  await drawFinger(page, () => 0.4)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  assert.match(await page.locator(".naive").innerText(), /rovn/i)
+  await page.click('.secondary:has-text("Sdílet")')
+  await page.waitForSelector('.secondary:has-text("Zkopírováno")')
+  const text = await page.evaluate(() => navigator.clipboard.readText())
+  assert.match(text, /Kam to půjde\?[\s\S]*Realita/)
+})
+
+await test('denní výzva: odehrání a označení jako splněné', async (page) => {
+  await page.waitForSelector('.daily small:not(:text("Načítám…"))')
+  await page.click('.daily')
+  await page.waitForSelector('canvas')
+  assert.match(await page.locator('.topbar strong').innerText(), /Denní výzva/)
+  await drawFinger(page, () => 0.42)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  await page.goto(url)
+  assert.match(await page.locator('.daily').innerText(), /splněna/)
+})
+
+await test('statistiky po hře a nastavení motivu', async (page) => {
+  await page.click('[aria-label="Statistiky"]')
+  assert.match(await page.locator('main').innerText(), /Zatím žádné hry/)
+  await page.goBack()
+  await page.click('.scenario >> nth=0')
+  await drawFinger(page, () => 0.4)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  await page.goto(url)
+  await page.click('[aria-label="Statistiky"]')
+  assert.match(await page.locator('main').innerText(), /1 hra[\s\S]*Trefený směr/)
+  await page.goBack()
+  await page.click('[aria-label="Nastavení"]')
+  await page.click('.segmented button:has-text("Tmavý")')
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark')
+  await page.reload()
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark')
+  await page.click('[aria-label="Nastavení"]')
+  await page.click('.danger')
+  await page.click('.danger')
+  await page.goto(url)
+  await page.click('[aria-label="Statistiky"]')
+  assert.match(await page.locator('main').innerText(), /Zatím žádné hry/)
 })
 
 await test('kreslení: zpět a smazat', async (page) => {

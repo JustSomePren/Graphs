@@ -6,15 +6,22 @@ import { pressRelease } from './press.mjs'
 import { buildScenario } from './scenario.mjs'
 
 const SECTORS = {
-  technologie: ['MSFT', 'ORCL', 'ADBE', 'CSCO', 'IBM', 'QCOM', 'TXN', 'AMD'],
-  internet: ['AMZN', 'GOOGL', 'EBAY', 'PYPL', 'BKNG'],
-  maloobchod: ['WMT', 'TGT', 'COST', 'HD', 'LOW', 'BBY'],
-  'spotřební zboží': ['KO', 'PEP', 'PG', 'NKE', 'SBUX', 'MCD'],
-  zdravotnictví: ['JNJ', 'PFE', 'MRK', 'ABBV', 'LLY', 'UNH'],
-  průmysl: ['CAT', 'DE', 'BA', 'UPS', 'FDX', 'MMM'],
-  energetika: ['XOM', 'CVX', 'COP'],
-  platby: ['V', 'MA', 'AXP'],
+  software: ['MSFT', 'ORCL', 'ADBE', 'CRM', 'INTU', 'NOW', 'IBM'],
+  polovodiče: ['NVDA', 'AMD', 'INTC', 'QCOM', 'TXN', 'MU', 'AMAT', 'AVGO'],
+  internet: ['AMZN', 'GOOGL', 'META', 'NFLX', 'EBAY', 'BKNG', 'PYPL'],
+  hardware: ['AAPL', 'CSCO', 'HPQ', 'DELL'],
+  maloobchod: ['WMT', 'TGT', 'COST', 'HD', 'LOW', 'BBY', 'TJX', 'DG', 'DLTR'],
+  'spotřební zboží': ['KO', 'PEP', 'PG', 'CL', 'KMB', 'MDLZ', 'NKE'],
+  restaurace: ['MCD', 'SBUX', 'CMG', 'YUM'],
+  zdravotnictví: ['JNJ', 'PFE', 'MRK', 'ABBV', 'LLY', 'AMGN', 'GILD', 'BMY'],
+  'zdravotní péče': ['UNH', 'CVS', 'ISRG', 'TMO'],
+  průmysl: ['CAT', 'DE', 'BA', 'MMM', 'HON', 'LMT', 'GE', 'RTX'],
+  doprava: ['UPS', 'FDX', 'DAL', 'UAL', 'LUV'],
+  energetika: ['XOM', 'CVX', 'COP', 'SLB', 'OXY'],
+  'platby a finance': ['V', 'MA', 'AXP', 'SCHW'],
   automobily: ['F', 'GM', 'TSLA'],
+  'média a telekomunikace': ['DIS', 'CMCSA', 'T', 'VZ', 'TMUS'],
+  'cestování a zábava': ['MAR', 'HLT', 'RCL', 'CCL'],
 }
 
 const HORIZONS = [
@@ -22,7 +29,7 @@ const HORIZONS = [
   { days: 30, label: 'měsíc', history: 365 },
   { days: 91, label: '3 měsíce', history: 730 },
 ]
-const PER_COMPANY = 3
+const PER_COMPANY = 12
 
 // Opakovatelná „náhoda“ – stejné scénáře při každém sestavení
 function random(seed) {
@@ -41,6 +48,8 @@ const pct = (x) => (x == null ? '–' : `${x > 0 ? '+' : ''}${Math.round(x * 100
 
 // Nahradí jméno firmy, aby anonymní režim neprozradil, o koho jde
 function scrub(text, words) {
+  // Burzovní označení typu „(NYSE: T)“ nebo „(Nasdaq: AAPL)“ prozradí ticker
+  text = text.replace(/\(\s*(NYSE|NASDAQ|Nasdaq|NYSE American)\s*:?\s*[A-Z.]{1,5}\s*\)/g, '')
   return words.reduce((t, w) => t.replace(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}('s)?\\b`, 'gi'), 'the Company$1'), text)
 }
 
@@ -59,8 +68,8 @@ export async function buildAuto() {
     for (const ticker of tickers) {
       const cik = await cikFor(ticker)
       if (!cik) continue
-      const daily = (await prices(ticker, '2015-01-01', '2025-06-30'))?.rows ?? []
-      const releases = (await earningsDates(cik, '2016-06-01', '2024-12-31')).filter((e) => !e.preliminary)
+      const daily = (await prices(ticker, '2012-01-01', '2025-06-30'))?.rows ?? []
+      const releases = (await earningsDates(cik, '2012-01-01', '2025-03-31')).filter((e) => !e.preliminary)
       const words = await companyWords(ticker)
       const picks = new Set()
       while (picks.size < Math.min(PER_COMPANY, releases.length)) picks.add(Math.floor(rand() * releases.length))
@@ -85,7 +94,7 @@ export async function buildAuto() {
           endDate: isoDay(toTs(decisionDate) + horizon.days * DAY),
         }
         try {
-          const s = await buildScenario(config, { withInsiders: false })
+          const s = await buildScenario(config, { withInsiders: false, compact: true })
           const target = s.earnings.find((e) => e.date === release.date)
           const now = await pressRelease(release.url).catch(() => null)
           out.push(finish(s, target, now, words))

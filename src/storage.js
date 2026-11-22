@@ -1,4 +1,5 @@
 const KEY = 'graphs-results-v1'
+const SETTINGS = 'graphs-settings-v1'
 const FLAGS = 'graphs-flags-v1'
 const HISTORY = 'graphs-history-v1'
 
@@ -29,8 +30,21 @@ export function saveResult(s, score) {
   all[s.id] = { best: Math.max(prev?.best ?? 0, total), last: total, plays: (prev?.plays ?? 0) + 1 }
   write(KEY, all)
 
-  const history = [{ id: s.id, auto: Boolean(s.auto), title: s.auto ? `${s.name} · ${s.sector}` : s.title, score: total, date: today() }, ...loadHistory()].slice(0, 50)
+  const entry = {
+    id: s.id,
+    auto: Boolean(s.auto),
+    daily: Boolean(s.daily),
+    title: s.auto ? `${s.name} · ${s.sector}` : s.title,
+    score: total,
+    date: today(),
+    predEnd: score.predEnd,
+    actualEnd: score.actualEnd,
+    horizon: s.horizon,
+    sector: s.sector ?? 'příběhy',
+  }
+  const history = [entry, ...loadHistory()].slice(0, 200)
   write(HISTORY, history)
+  if (s.daily) setFlag('daily-' + today())
   return unlock({ score, history, results: all })
 }
 
@@ -86,3 +100,20 @@ export function rank(history = loadHistory()) {
   const next = RANKS[i + 1]
   return { label: RANKS[i].label, avg, next: next ? `Na hodnost ${next.label} potřebuješ průměr ${next.min}` : 'Nejvyšší hodnost' }
 }
+
+// --- nastavení ---
+
+const DEFAULTS = { theme: 'system', haptics: true, band: false }
+
+export const loadSettings = () => ({ ...DEFAULTS, ...read(SETTINGS) })
+export const saveSettings = (patch) => write(SETTINGS, { ...loadSettings(), ...patch })
+
+export function resetProgress() {
+  for (const key of [KEY, HISTORY, FLAGS]) {
+    try {
+      localStorage.removeItem(key)
+    } catch {}
+  }
+}
+
+export const dailyDone = () => getFlag('daily-' + today())

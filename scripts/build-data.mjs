@@ -23,4 +23,24 @@ for (const s of scenarios) {
 }
 await writeChecked('src/data/scenarios.json', out)
 
-if (process.argv.includes('--auto')) await writeChecked('src/data/auto.json', await buildAuto(), true)
+// Automatické scénáře: po odvětvích do samostatných souborů + malý index, aplikace je načítá až když je potřebuje
+if (process.argv.includes('--auto')) {
+  const list = (await buildAuto()).filter((s) => {
+    const problems = validateScenario(s)
+    problems.forEach((p) => console.warn('⚠', p))
+    return !problems.length
+  })
+  await fs.rm('src/data/auto', { recursive: true, force: true })
+  await fs.mkdir('src/data/auto', { recursive: true })
+  const sectors = [...new Set(list.map((s) => s.sector))]
+  const index = []
+  for (const [i, sector] of sectors.entries()) {
+    const part = `part-${String(i).padStart(2, '0')}`
+    const items = list.filter((s) => s.sector === sector)
+    await fs.writeFile(`src/data/auto/${part}.json`, JSON.stringify(items))
+    items.forEach((s) => index.push({ id: s.id, part, sector, horizon: s.horizon, date: s.decisionDate }))
+  }
+  await fs.writeFile('src/data/auto/index.json', JSON.stringify(index))
+  await fs.rm('src/data/auto.json', { force: true })
+  console.log(`Hotovo: ${list.length} automatických scénářů v ${sectors.length} částech`)
+}

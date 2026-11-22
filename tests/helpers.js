@@ -11,3 +11,17 @@ export function fakeScenario(futurePrices, { earnings = [] } = {}) {
     events: [],
   }
 }
+
+// Načte všechny části automatických scénářů z disku
+import fs from 'node:fs'
+import path from 'node:path'
+
+export function loadAuto() {
+  const dir = path.resolve('src/data/auto')
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.startsWith('part-'))
+    .flatMap((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))
+}
+
+export const loadAutoIndex = () => JSON.parse(fs.readFileSync(path.resolve('src/data/auto/index.json'), 'utf8'))

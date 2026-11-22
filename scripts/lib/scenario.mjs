@@ -38,13 +38,17 @@ async function earningsHistory(s, rows, splits, list) {
   return out
 }
 
-export async function buildScenario(s, { withInsiders = true, withPeers = true } = {}) {
+// compact: starší historie se zředí na každý 3. den a ceny zaokrouhlí – kvůli velikosti dat v aplikaci
+export async function buildScenario(s, { withInsiders = true, withPeers = true, compact = false } = {}) {
   const px = await prices(s.ticker, s.historyStart, s.endDate, s.decisionDate)
   if (!px) throw new Error('chybí ceny ' + s.ticker)
   const daily = px.rows.filter((r) => r.date >= s.historyStart && r.date <= s.endDate)
 
   // U krátkých scénářů jsou poslední 3 týdny a budoucnost po hodinách
-  let series = daily.map((r) => [r.date, r.close])
+  const recent = isoDay(toTs(s.decisionDate) - 182 * DAY)
+  const thin = (rows) => (compact ? rows.filter((r, i) => r.date >= recent || i % 3 === 0) : rows)
+  const precise = (x) => (compact ? Number(x.toPrecision(5)) : x)
+  let series = thin(daily).map((r) => [r.date, precise(r.close)])
   if (s.intraday) {
     const from = isoDay(toTs(s.decisionDate) - 21 * DAY)
     const bars = await hourly(s.ticker, from, s.endDate, s.decisionDate)

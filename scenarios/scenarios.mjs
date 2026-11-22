@@ -634,4 +634,173 @@ export const scenarios = [
       ],
     },
   },
+  {
+    id: 'amzn-2022-04',
+    ticker: 'AMZN',
+    name: 'Amazon',
+    title: 'Amazon po covidovém boomu',
+    horizon: '2 měsíce',
+    peers: ['WMT', 'GOOGL', 'MSFT'],
+    historyStart: '2020-06-01',
+    decisionDate: '2022-04-28',
+    endDate: '2022-06-30',
+    situation:
+      'Je 28. dubna 2022 odpoledne. Amazon dnes po zavření burzy zveřejní výsledky za Q1. Inflace v USA je nejvyšší za 40 let, Fed začal zvedat sazby a technologické akcie v dubnu prudce padají. ' +
+      'Amazon během pandemie zdvojnásobil logistickou síť a teď řeší vyšší náklady na mzdy a dopravu. V březnu ohlásil split akcií 20:1 a zpětný odkup za 10 mld. USD.',
+    events: [
+      { date: '2021-07-05', label: 'Andy Jassy novým CEO' },
+      { date: '2021-11-10', label: 'IPO Rivianu (Amazon drží velký podíl)' },
+      { date: '2022-02-03', label: 'Q4 2021: zdražení Prime, akcie +13,5 %' },
+      { date: '2022-03-09', label: 'Ohlášen split 20:1 a odkup za 10 mld.' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q4 2021 (3. 2. 2022)',
+        body:
+          'Tržby 137,4 mld. USD (+9 %), AWS 17,8 mld. (+40 %). Zisk nafoukl přecenění podílu v Rivianu. Amazon zdražil Prime v USA ze 119 na 139 USD ročně. Akcie den poté +13,5 %.',
+      },
+      {
+        title: 'Náklady a kapacity',
+        body:
+          'Vedení přiznává, že po covidu má více skladů a lidí, než potřebuje, a náklady na dopravu a mzdy rostou. Akcie Rivianu od IPO výrazně spadly – Amazon bude vykazovat ztrátu z přecenění.',
+      },
+      { title: 'Trh', body: 'Nasdaq je od listopadového maxima zhruba o pětinu níž. Investoři utíkají od růstových firem kvůli rostoucím sazbám.' },
+    ],
+    outcome: {
+      summary:
+        'Amazon vykázal čistou ztrátu 3,8 mld. USD (hlavně přecenění Rivianu o 7,6 mld.), tržby +7 % – nejpomalejší růst za dvě desetiletí – a slabý výhled na Q2. ' +
+        'Akcie 29. dubna −14 %, nejhorší den od roku 2006. Pak dál padala s celým technologickým sektorem.',
+      points: [
+        'AWS rostl o 37 %, ale e-commerce zpomalila a náklady rostly.',
+        'V červnu proběhl split 20:1 – graf je přepočítaný, cena v grafu je v „předsplitových“ dolarech.',
+        'Makro (Fed, inflace) táhlo dolů celý sektor.',
+      ],
+    },
+  },
+  {
+    id: 'snap-2022-05',
+    ticker: 'SNAP',
+    name: 'Snap',
+    title: 'Snap varuje uprostřed kvartálu',
+    horizon: '2 měsíce',
+    peers: ['META', 'PINS', 'GOOGL'],
+    historyStart: '2021-01-04',
+    decisionDate: '2022-05-23',
+    endDate: '2022-07-29',
+    situation:
+      'Je večer 23. května 2022. Snap (Snapchat) po zavření burzy zveřejnil interní dopis CEO: makroekonomické prostředí se zhoršilo rychleji, než firma čekala, ' +
+      'a tržby i provozní zisk za Q2 budou pod spodní hranicí výhledu, který dala před měsícem. Firma zpomalí nábor.',
+    events: [
+      { date: '2021-09-24', label: 'Akcie na historickém maximu' },
+      { date: '2021-10-21', label: 'Q3: dopad Apple ATT, akcie −27 %' },
+      { date: '2022-02-03', label: 'Q4: první čtvrtletní zisk, akcie +59 %' },
+      { date: '2022-04-21', label: 'Q1 2022 výsledky' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q1 2022 (21. 4. 2022)',
+        body:
+          'Tržby 1,06 mld. USD (+38 %), denně aktivní uživatelé 332 mil. (+18 %). Výhled na Q2: růst tržeb 20–25 %. Vedení zmiňuje nejistotu kvůli válce na Ukrajině, inflaci a změnám v iOS.',
+      },
+      {
+        title: 'Co znamená varování',
+        body:
+          'Jen měsíc po výhledu ho firma ruší. Snap žije z reklamy – když on vidí slabší poptávku inzerentů, týká se to možná i Mety, Pinterestu nebo Googlu.',
+      },
+      { title: 'Konkurence', body: 'TikTok bere pozornost mladých uživatelů, Meta tlačí Reels. Apple ATT omezil cílení reklam.' },
+    ],
+    outcome: {
+      summary:
+        'Snap 24. května −43 % a strhl celý reklamní sektor: Meta −8 %, Alphabet −5 %, Pinterest −24 %. ' +
+        'Výsledky Q2 (21. 7.) potvrdily zpomalení na +13 %, firma nedala výhled a akcie spadla o dalších 39 %.',
+      points: [
+        'Varování uprostřed kvartálu je silný signál – málokdy přijde jen jedno.',
+        'Malé firmy s vysokou valuací reagují na zpomalení nejprudčeji.',
+        'Reklamní trh je cyklický – inzerenti škrtají jako první.',
+      ],
+    },
+  },
+  {
+    id: 'tgt-2022-05',
+    ticker: 'TGT',
+    name: 'Target',
+    title: 'Target a zaseklé zásoby',
+    horizon: '2 měsíce',
+    peers: ['WMT', 'COST', 'BBY'],
+    historyStart: '2021-01-04',
+    decisionDate: '2022-05-17',
+    endDate: '2022-07-29',
+    situation:
+      'Je večer 17. května 2022. Target zítra před otevřením burzy zveřejní výsledky za Q1. Dnes ráno Walmart vykázal výrazně nižší zisk kvůli nákladům na palivo, mzdy a přebytečným zásobám ' +
+      'a jeho akcie spadla o 11 % – nejvíc od roku 1987. Inflace mění to, co lidé kupují: méně televizí a nábytku, víc jídla a benzínu.',
+    events: [
+      { date: '2021-11-17', label: 'Q3 2021: rekordní tržby' },
+      { date: '2022-03-01', label: 'Q4 2021: silné prázdniny' },
+      { date: '2022-05-17', label: 'Walmart vykázal slabý zisk, −11 %' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q4 2021 (1. 3. 2022)',
+        body:
+          'Silná prázdninová sezóna, tržby rekordní. Target zvýšil dividendu a oznámil odkup akcií za 15 mld. USD. Na rok 2022 čekal provozní marži kolem 8 %.',
+      },
+      {
+        title: 'Walmart (17. 5. 2022)',
+        body:
+          'Největší konkurent snížil roční výhled zisku. Důvody: palivo, přesčasy, dražší doprava a zásoby zboží, které se teď neprodává. Zásoby Walmartu meziročně +33 %.',
+      },
+      { title: 'Spotřebitel', body: 'Ceny potravin a energií rostou nejrychleji za desítky let. Lidé omezují nákupy elektroniky, domácích potřeb a oblečení, které během covidu kupovali hodně.' },
+    ],
+    outcome: {
+      summary:
+        'Target vykázal provozní marži jen 5,3 % (rok předtím 9,8 %) a zisk na akcii hluboko pod očekáváním. Zásoby vzrostly o 43 %. ' +
+        'Akcie 18. května −25 % – nejhorší den od krachu v roce 1987. 7. června Target znovu snížil výhled marže a ohlásil výprodeje zásob.',
+      points: [
+        'Walmart den předem byl varováním – podobný byznys, podobné problémy.',
+        'Prudký růst zásob proti tržbám = budoucí slevy a nižší marže.',
+        'Druhé varování v červnu trh přijal klidněji – špatné zprávy už byly v ceně.',
+      ],
+    },
+  },
+  {
+    id: 'ba-2024-01',
+    ticker: 'BA',
+    name: 'Boeing',
+    title: 'Boeing a utržené dveře',
+    horizon: '2 měsíce',
+    peers: ['RTX', 'GE', 'LMT'],
+    historyStart: '2022-01-03',
+    decisionDate: '2024-01-05',
+    endDate: '2024-03-15',
+    situation:
+      'Je večer v pátek 5. ledna 2024. Letadlu Alaska Airlines (Boeing 737 MAX 9) se krátce po startu z Portlandu ve výšce asi 5 km utrhl panel dveří v trupu. ' +
+      'Letadlo bezpečně přistálo, nikdo nezemřel. Boeing se po krizi 737 MAX z let 2019–2020 snaží obnovit důvěru a zvyšovat výrobu.',
+    events: [
+      { date: '2023-04-13', label: 'Vada od dodavatele Spirit AeroSystems' },
+      { date: '2023-10-25', label: 'Q3 2023 výsledky' },
+      { date: '2023-12-29', label: 'Kontroly kvůli uvolněnému šroubu ve směrovce' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q3 2023 (25. 10. 2023)',
+        body:
+          'Tržby rostou, ale Boeing je stále ve ztrátě. Firma potvrdila cíl volného cash flow 3–5 mld. USD na rok 2023 a plán zvýšit výrobu 737 na 38 kusů měsíčně a dál.',
+      },
+      {
+        title: 'Co může následovat',
+        body: 'Úřad FAA může letadla uzemnit, nařídit kontroly nebo omezit výrobu. Aerolinky mohou žádat kompenzace a odkládat objednávky. Na druhé straně má Boeing objednávky na roky dopředu.',
+      },
+      { title: 'Konkurence', body: 'Airbus je jediný velký konkurent a má také plnou výrobu na roky. Zákazníci nemohou snadno přejít.' },
+    ],
+    outcome: {
+      summary:
+        'FAA 6. ledna uzemnila 171 letadel 737 MAX 9. Akcie v pondělí 8. ledna −8 % a pokles pokračoval: FAA zakázala zvyšovat výrobu 737 MAX, ' +
+        'Boeing ve výsledcích (31. 1.) nedal výhled na rok 2024 a předběžná zpráva vyšetřovatelů NTSB (6. 2.) uvedla, že na panelu chyběly šrouby. Do poloviny března akcie ztratila zhruba čtvrtinu.',
+      points: [
+        'Nehoda bez obětí, ale odhalila systémové problémy s kvalitou.',
+        'Regulátor omezil výrobu → nižší cash flow na roky dopředu.',
+        'Špatné zprávy přicházely postupně – pokles byl dlouhý, ne jednorázový.',
+      ],
+    },
+  },
 ]

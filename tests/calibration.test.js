@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import stories from '../src/data/scenarios.json'
-import auto from '../src/data/auto.json'
+import { loadAuto } from './helpers.js'
+
+const auto = loadAuto()
 import { buildModel } from '../src/model.js'
 import { scorePrediction } from '../src/score.js'
 

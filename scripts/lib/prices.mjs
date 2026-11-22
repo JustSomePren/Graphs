@@ -25,7 +25,7 @@ async function loadTiingo(ticker, from) {
 // Všechno od roku 2014 se stahuje jedním dotazem na firmu, starší data zvlášť
 async function loadDaily(ticker, from) {
   if (process.env.TIINGO_TOKEN) return loadTiingo(ticker, from)
-  const start = from > '2015-01-01' ? '2015-01-01' : from
+  const start = from >= '2015-01-01' ? '2015-01-01' : from >= '2010-01-01' ? '2010-01-01' : from
   const p1 = Math.floor((toTs(start) - 400 * DAY) / 1000)
   // Yahoo občas vrátí jen pár posledních dní – taková odpověď se neukládá
   const complete = (j) => j.chart?.result?.[0]?.timestamp?.length > 50

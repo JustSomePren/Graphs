@@ -1,10 +1,11 @@
-import { DAY, el, fmtBig, fmtDate, fmtMonth, fmtPct, fmtPrice, fmtX, toTs } from './format.js'
+import { DAY, el, fmtBig, fmtDate, fmtMonth, fmtNum, fmtPct, fmtPp, fmtPrice, fmtX, plural, toTs } from './format.js'
 import { buildModel } from './model.js'
 import { createChart, ZOOMS } from './chart.js'
 import { scorePrediction } from './score.js'
-import { signals } from './signals.js'
-import { earnedBadges, getFlag, loadHistory, loadResults, rank, saveResult, setFlag, streak, BADGES } from './storage.js'
-import { success, tap } from './native.js'
+import { balance, derived, signals } from './signals.js'
+import { dailyDone, earnedBadges, getFlag, loadHistory, loadResults, loadSettings, rank, resetProgress, saveResult, saveSettings, setFlag, streak, BADGES } from './storage.js'
+import { applyTheme, share, success, tap } from './native.js'
+import { playerStats, shareText } from './extras.js'
 
 const HORIZONS = [
   { label: 'Vše', test: () => true },
@@ -24,7 +25,7 @@ export function difficulty(s) {
 
 // --- domovská obrazovka ---
 
-export function homeView(stories, { open, quick, mode = 0 }) {
+export function homeView(stories, { open, quick, daily, stats, settings, mode = 0 }) {
   const results = loadResults()
   const body = el('div')
   const showMode = (i) => body.replaceChildren(i ? quickPanel(quick) : storiesPanel(stories, results, open))
@@ -34,13 +35,35 @@ export function homeView(stories, { open, quick, mode = 0 }) {
   return el(
     'main',
     { class: 'screen' },
-    el('header', { class: 'hero' }, el('span', { class: 'logo' }, '📈'), el('h1', {}, 'Kam to půjde?'), el('p', {}, 'Buď investorem v konkrétní den. Prostuduj data, nakresli vývoj a porovnej s realitou.')),
+    el(
+      'header',
+      { class: 'hero' },
+      el('div', { class: 'hero-top' }, el('span', { class: 'logo' }, '📈'), el('button', { class: 'icon-btn', 'aria-label': 'Statistiky', onclick: stats }, '📊'), el('button', { class: 'icon-btn', 'aria-label': 'Nastavení', onclick: settings }, '⚙️')),
+      el('h1', {}, 'Kam to půjde?'),
+      el('p', {}, 'Buď investorem v konkrétní den. Prostuduj data, nakresli vývoj a porovnej s realitou.'),
+    ),
     getFlag('intro') ? null : introCard(),
+    dailyCard(daily),
     profileCard(),
     modes,
     body,
     el('p', { class: 'foot' }, 'Data: SEC EDGAR, FRED, denní a hodinové ceny. Hra není investiční doporučení.'),
   )
+}
+
+// Denní výzva – info o dnešním scénáři se načte až s indexem automatických scénářů
+function dailyCard(daily) {
+  const done = dailyDone()
+  const info = el('small', {}, 'Načítám…')
+  const card = el(
+    'button',
+    { class: 'card daily' + (done ? ' done' : ''), onclick: () => daily.start() },
+    el('span', { class: 'daily-icon' }, done ? '✅' : '📅'),
+    el('div', { class: 'grow' }, el('strong', {}, done ? 'Denní výzva splněna' : 'Denní výzva'), info),
+    el('span', { class: 'chev' }, '›'),
+  )
+  daily.info.then((pick) => (info.textContent = `Anonymní firma · ${pick.sector} · ${pick.horizon}${done ? ' · zítra nová' : ''}`)).catch(() => card.remove())
+  return card
 }
 
 function introCard() {
@@ -111,7 +134,7 @@ function scenarioCard(s, result, open) {
   return el(
     'button',
     { class: 'card scenario', onclick: () => open(s) },
-    el('div', { class: 'scenario-top' }, el('span', { class: 'ticker' }, s.ticker), el('span', { class: 'pill' }, s.horizon), result ? el('span', { class: `badge ${tier(result.best)}` }, result.best) : null),
+    el('div', { class: 'scenario-top' }, el('span', { class: 'ticker' }, s.ticker), el('span', { class: 'pill' }, s.horizon), result ? el('span', { class: `badge ${tier(result.best)}`, title: 'Nejlepší skóre' }, `✓ ${result.best}`) : null),
     el('strong', {}, s.title),
     el('small', {}, `${fmtDate(s.decisionDate)} · ${difficulty(s)}`),
     sparkline(s),
@@ -160,11 +183,21 @@ export function gameView(s, { back, next }) {
     showZoom()
   }
 
+  const extra = derived(s)
+  const bandButton = el('button', { class: 'icon-btn', 'aria-label': 'Pásmo běžného pohybu', 'aria-pressed': 'false', onclick: () => toggleBand() }, '±')
+  const toggleBand = (on = bandButton.getAttribute('aria-pressed') !== 'true') => {
+    bandButton.setAttribute('aria-pressed', String(on))
+    bandButton.classList.toggle('active', on)
+    chart.setBand(on ? extra.expectedMove : null)
+    saveSettings({ band: on })
+  }
+
   const toolbar = el(
     'div',
     { class: 'toolbar' },
     segmented(['✍️ Prst', '📍 Body'], 0, (i) => chart.setMode(i ? 'points' : 'finger')),
     zoomButton,
+    extra.expectedMove ? bandButton : null,
     el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => chart.undo() }, '↶'),
     el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => chart.clear() }, '✕'),
   )
@@ -175,9 +208,10 @@ export function gameView(s, { back, next }) {
   const screen = el(
     'main',
     { class: 'screen game' },
-    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět na seznam', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, s.auto ? 'Kam půjde akcie po výsledcích?' : s.title), subtitle)),
+    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět na seznam', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, s.daily ? '📅 Denní výzva' : s.auto ? 'Kam půjde akcie po výsledcích?' : s.title), subtitle)),
     el('section', { class: 'card chart-card' }, legend, canvas),
     toolbar,
+    firstTip(),
     resultBox,
     analysisTabs(s, model, state),
     el('div', { class: 'action-bar' }, action),
@@ -185,6 +219,7 @@ export function gameView(s, { back, next }) {
 
   chart = createChart(canvas, model, { onChange: () => (tap(), refresh()) })
   chart.setMode('finger')
+  if (loadSettings().band && extra.expectedMove) toggleBand(true)
   zoomIndex = ZOOMS.indexOf(chart.zoom)
   showZoom()
   refresh()
@@ -200,7 +235,7 @@ export function gameView(s, { back, next }) {
       success()
       if (s.auto) subtitle.textContent = `${s.ticker} · ${s.sector}`
       legend.append(el('span', { class: `key real ${score.actualEnd >= 0 ? 'up' : 'down'}` }, 'Realita'))
-      resultBox.replaceChildren(resultCard(s, model, score, badges))
+      resultBox.replaceChildren(resultCard(s, model, score, badges, chart.points))
       resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' })
       action.dataset.done = '1'
       action.disabled = false
@@ -211,12 +246,30 @@ export function gameView(s, { back, next }) {
   return screen
 }
 
+// Jednorázový tip pro nové hráče
+function firstTip() {
+  if (getFlag('tip-band')) return null
+  const tip = el(
+    'p',
+    { class: 'note tip' },
+    '💡 Tlačítko ± ukáže, jak velký pohyb je u této akcie v daném horizontu běžný. Klepnutím na „E“ v grafu uvidíš čísla minulých výsledků.',
+    el('button', { class: 'link', onclick: () => (setFlag('tip-band'), tip.remove()) }, 'OK'),
+  )
+  return tip
+}
+
 function chartDescription(s, model) {
   const first = model.history[0]
   return `Graf ceny od ${fmtDate(first.date)} (${fmtPrice(first.price)}) do ${fmtDate(s.decisionDate)} (${fmtPrice(model.p0)}). Vpravo je prázdná zóna pro tvůj odhad do ${fmtDate(model.future.at(-1).date.slice(0, 10))}.`
 }
 
-function resultCard(s, model, score, badges) {
+function resultCard(s, model, score, badges, points) {
+  const flat = scorePrediction(model, [{ t: 1, r: 0 }])
+  const flatTotal = flat.total + flat.bonus
+  const shareButton = el('button', { class: 'secondary', onclick: async () => {
+    const result = await share(shareText(s, model, points, score))
+    if (result === 'copied') shareButton.textContent = '✓ Zkopírováno do schránky'
+  } }, '↗ Sdílet výsledek')
   const verdict = score.total >= 85 ? 'Věštec 🔮' : score.total >= 65 ? 'Dobrý odhad 👍' : score.total >= 40 ? 'Napůl trefa' : 'Trh tě přechytračil'
   return el(
     'section',
@@ -230,12 +283,14 @@ function resultCard(s, model, score, badges) {
     badges.length ? el('div', { class: 'new-badges' }, badges.map((b) => el('span', {}, `${b.icon} Nový odznak: ${b.label}`))) : null,
     el('div', { class: 'compare' }, stat('Tvůj odhad', fmtPct(score.predEnd)), stat('Realita', fmtPct(score.actualEnd)), stat('Rozdíl', `${Math.round(Math.abs(score.gapPoints))} p.b.`)),
     el('div', { class: 'bars' }, score.parts.map((p) => el('div', { class: 'bar' }, el('span', {}, p.label), el('i', { style: `--w:${(p.value / p.max) * 100}%` }), el('b', {}, `${p.value}/${p.max}`)))),
+    el('p', { class: 'naive' }, score.total + score.bonus > flatTotal ? `👏 Porazil jsi „rovnou čáru“ (odhad beze změny by dostal ${flatTotal} b.)` : `🤏 Rovná čára (žádná změna) by dostala ${flatTotal} b. – tentokrát lepší než tvůj odhad`),
     score.checks.length ? el('div', { class: 'chips' }, score.checks.map((c) => el('span', { class: `chip-tag ${c.ok ? 'good' : ''}` }, (c.ok ? '✓ ' : '✗ ') + c.label))) : null,
     el('h3', {}, 'Proč to dopadlo takhle'),
     el('p', {}, s.outcome.summary),
     s.outcome.points.length ? el('ul', { class: 'plain' + (s.outcome.english ? ' quote' : '') }, s.outcome.points.map((p) => el('li', {}, p))) : null,
     s.outcome.english ? el('p', { class: 'muted small' }, 'Body výše jsou výňatky z tiskové zprávy firmy (anglicky).') : null,
     model.upcomingEarnings.length ? el('p', { class: 'links' }, 'Zdroj: ', model.upcomingEarnings.map((e) => el('a', { href: e.url, target: '_blank' }, `8-K ${fmtDate(e.date)}`))) : null,
+    shareButton,
   )
 }
 
@@ -256,6 +311,11 @@ function analysisTabs(s, model, state) {
 }
 
 function overviewPane(s, model) {
+  const m = s.metrics
+  const d = derived(s)
+  const list = signals(s)
+  const sum = balance(list)
+  const areas = [...new Set(list.map((x) => x.area))]
   return el(
     'div',
     {},
@@ -263,16 +323,54 @@ function overviewPane(s, model) {
     model.upcomingEarnings.length
       ? el('p', { class: 'note' }, '📅 V období vyjdou výsledky: ', model.upcomingEarnings.map((e) => `${fmtDate(e.date)}${e.afterClose ? ' po zavření burzy' : ''}`).join(', '))
       : null,
-    el('h4', {}, 'Rychlý přehled'),
-    el('ul', { class: 'signals' }, signals(s).map((x) => el('li', { class: x.tone }, el('span', { class: 'area' }, x.area), x.text))),
+    el('h4', {}, 'Klíčová čísla'),
+    el(
+      'div',
+      { class: 'tiles' },
+      tile('Cena', fmtPrice(m.price), `kap. ${fmtBig(m.marketCap)}`),
+      tile('P/E', pe(m), d.peerPe ? `konkurence ${fmtX(d.peerPe)}` : `P/S ${fmtX(m.ps)}`),
+      tile('Růst tržeb', fmtPct(m.lastQuarterGrowth), 'posl. kvartál r/r', m.lastQuarterGrowth),
+      tile('Provozní marže', fmtPct(m.operatingMargin, false), d.marginChange != null ? `${fmtPp(d.marginChange)} r/r` : '12 měsíců', d.marginChange),
+      tile('Za 6 měsíců', fmtPct(m.change6m), `za rok ${fmtPct(m.change1y)}`, m.change6m),
+      tile('Běžný pohyb', d.expectedMove ? `±${fmtPct(d.expectedMove, false)}` : '–', `za ${s.horizon} (1σ)`),
+      tile('Reakce na výsledky', d.typicalReaction ? `±${fmtPct(d.typicalReaction, false)}` : '–', 'průměr minulých'),
+      tile('Volatilita', fmtPct(m.volatility, false), `beta ${num(m.beta)}`),
+    ),
+    rangeBar(m, d),
+    el('h4', {}, 'Signály'),
+    el(
+      'div',
+      { class: 'balance', role: 'img', 'aria-label': `${sum.good} pozitivních, ${sum.bad} negativních, ${sum.neutral} neutrálních signálů` },
+      el('i', { class: 'good', style: `flex:${sum.good}` }),
+      el('i', { class: 'neutral', style: `flex:${sum.neutral}` }),
+      el('i', { class: 'bad', style: `flex:${sum.bad}` }),
+    ),
+    el('p', { class: 'muted small' }, `${sum.good} pozitivních · ${sum.neutral} neutrálních · ${sum.bad} negativních`),
+    areas.map((area) =>
+      el('div', { class: 'signal-group' }, el('span', { class: 'area' }, area), el('ul', { class: 'signals' }, list.filter((x) => x.area === area).map((x) => el('li', { class: x.tone }, x.text)))),
+    ),
     el('p', { class: 'muted small' }, 'Signály jsou automatické shrnutí dat, ne doporučení. Podrobnosti najdeš v záložce Data.'),
+  )
+}
+
+const tile = (label, value, hint, trend) =>
+  el('div', { class: 'tile' }, el('span', {}, label), el('b', { class: trend > 0 ? 'up' : trend < 0 ? 'down' : '' }, value), el('small', {}, hint))
+
+// Kde je cena v rámci ročního rozpětí
+function rangeBar(m, d) {
+  if (d.rangePosition == null) return null
+  return el(
+    'div',
+    { class: 'range', role: 'img', 'aria-label': `Cena je na ${Math.round(d.rangePosition * 100)} % ročního rozpětí` },
+    el('div', { class: 'range-track' }, el('i', { style: `left:${d.rangePosition * 100}%` })),
+    el('div', { class: 'range-labels' }, el('small', {}, `min ${fmtPrice(m.low52)}`), el('small', {}, '52 týdnů'), el('small', {}, `max ${fmtPrice(m.high52)}`)),
   )
 }
 
 const row = (label, value, hint) => el('div', { class: 'row' }, el('span', {}, label, hint ? el('small', {}, hint) : null), el('b', {}, value ?? '–'))
 const section = (title, open, ...rows) => el('details', { class: 'section', open }, el('summary', {}, title), el('div', { class: 'rows' }, rows))
 const pe = (r) => (r.pe ? fmtX(r.pe) : r.epsTtm < 0 ? 'ztráta' : '–')
-const num = (x, digits = 2) => (x == null ? '–' : x.toLocaleString('cs-CZ', { maximumFractionDigits: digits }))
+const num = fmtNum
 
 function dataPane(s, model) {
   const m = s.metrics
@@ -384,7 +482,7 @@ function quartersChart(quarters) {
 }
 
 function insidersSection(ins) {
-  const people = (n) => `${n} ${n === 1 ? 'osoba' : n < 5 ? 'osoby' : 'osob'}`
+  const people = (n) => plural(n, 'osoba', 'osoby', 'osob')
   return section(
     'Insideři (6 měsíců)',
     false,
@@ -489,4 +587,76 @@ function segmented(labels, active, onPick, cls = 'segmented') {
     onPick(i)
   }
   return el('div', { class: cls, role: 'tablist' }, buttons)
+}
+
+// --- statistiky ---
+
+export function statsView(back) {
+  const st = playerStats(loadHistory())
+  const bar = (label, value, max) => el('div', { class: 'bar' }, el('span', {}, label), el('i', { style: `--w:${max ? (value / max) * 100 : 0}%` }), el('b', {}, String(value)))
+  const maxTier = Math.max(1, ...st.tiers.map((t) => t.count))
+  const bias = st.bias == null ? null : st.bias > 0.03 ? `Jsi optimista: tvé odhady jsou v průměru o ${fmtPct(st.bias, false)} výš než realita.` : st.bias < -0.03 ? `Jsi pesimista: tvé odhady jsou v průměru o ${fmtPct(-st.bias, false)} níž než realita.` : 'Tvé odhady nemají výrazný sklon nahoru ani dolů. 👍'
+  return el(
+    'main',
+    { class: 'screen' },
+    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, 'Statistiky'), el('small', {}, plural(st.games, 'hra', 'hry', 'her')))),
+    st.games
+      ? [
+          el('div', { class: 'stats' }, stat('Průměr', st.avg), stat('Nejlepší', st.best), stat('Trefený směr', st.directionHit != null ? `${Math.round(st.directionHit * 100)} %` : '–')),
+          bias ? el('p', { class: 'note' }, '🧭 ', bias) : null,
+          el('section', { class: 'card' }, el('h4', {}, 'Rozložení skóre'), el('div', { class: 'bars' }, st.tiers.map((t) => bar(t.label, t.count, maxTier)))),
+          groupCard('Podle horizontu', st.byHorizon),
+          groupCard('Podle odvětví', st.bySector),
+        ]
+      : el('p', { class: 'note' }, 'Zatím žádné hry. Zahraj si první scénář a statistiky se tu objeví.'),
+  )
+}
+
+function groupCard(title, groups) {
+  if (!groups.length) return null
+  return el(
+    'section',
+    { class: 'card' },
+    el('h4', {}, title),
+    el('div', { class: 'rows' }, groups.sort((a, b) => b.avg - a.avg).map((g) => row(g.label, String(g.avg), plural(g.count, 'hra', 'hry', 'her')))),
+  )
+}
+
+// --- nastavení ---
+
+export function settingsView(back) {
+  const settings = loadSettings()
+  const themes = ['system', 'light', 'dark']
+  const toggle = (label, hint, key) => {
+    const input = el('input', { type: 'checkbox', role: 'switch', 'aria-label': label })
+    input.checked = settings[key]
+    input.addEventListener('change', () => saveSettings({ [key]: input.checked }))
+    return el('label', { class: 'row switch' }, el('span', {}, label, el('small', {}, hint)), input)
+  }
+  const reset = el('button', { class: 'danger', onclick: () => {
+    if (reset.dataset.confirm) {
+      resetProgress()
+      reset.textContent = '✓ Postup smazán'
+      return
+    }
+    reset.dataset.confirm = '1'
+    reset.textContent = 'Opravdu smazat? Klepni znovu'
+  } }, 'Smazat postup a statistiky')
+
+  return el(
+    'main',
+    { class: 'screen' },
+    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, 'Nastavení'))),
+    el('h4', {}, 'Vzhled'),
+    segmented(['Podle systému', 'Světlý', 'Tmavý'], themes.indexOf(settings.theme), (i) => {
+      saveSettings({ theme: themes[i] })
+      applyTheme(themes[i])
+      window.dispatchEvent(new Event('themechange'))
+    }),
+    el('h4', {}, 'Hra'),
+    el('section', { class: 'card rows' }, toggle('Vibrace', 'při kreslení a vyhodnocení', 'haptics'), toggle('Pásmo běžného pohybu', 'zapnout ± v grafu automaticky', 'band')),
+    el('h4', {}, 'Data'),
+    el('section', { class: 'card' }, reset),
+    el('p', { class: 'foot' }, 'Kam to půjde? · verze 1.2 · data SEC EDGAR, FRED, Yahoo Finance'),
+  )
 }

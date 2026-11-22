@@ -1,19 +1,47 @@
 import './style.css'
 import stories from './data/scenarios.json'
-import { gameView, homeView } from './views.js'
+import { gameView, homeView, settingsView, statsView } from './views.js'
 import { loadResults } from './storage.js'
-import { setupStatusBar } from './native.js'
+import { applyTheme, setupStatusBar } from './native.js'
+import { dailyPick } from './extras.js'
+
+// Automatické scénáře jsou rozdělené po odvětvích a načítají se, až jsou potřeba
+const parts = import.meta.glob('./data/auto/part-*.json', { import: 'default' })
+const loadIndex = () => import('./data/auto/index.json').then((m) => m.default)
+const loaded = {}
+
+async function loadScenario(entry) {
+  const key = `./data/auto/${entry.part}.json`
+  loaded[key] ??= await parts[key]()
+  return loaded[key].find((s) => s.id === entry.id)
+}
 
 const app = document.getElementById('app')
 let homeMode = 0
-let autoScenarios
 
 function show(view) {
   app.replaceChildren(view)
   window.scrollTo(0, 0)
 }
 
-const home = () => show(homeView(stories, { open: (s) => ((homeMode = 0), open(s)), quick, mode: homeMode }))
+const screens = {
+  home: () =>
+    homeView(stories, {
+      open: (s) => ((homeMode = 0), open(s)),
+      quick,
+      daily: { info: loadIndex().then((index) => dailyPick(index)), start: startDaily },
+      stats: () => go('stats'),
+      settings: () => go('settings'),
+      mode: homeMode,
+    }),
+  stats: () => statsView(() => history.back()),
+  settings: () => settingsView(() => history.back()),
+}
+
+function go(name) {
+  history.pushState({ screen: name }, '')
+  show(screens[name]())
+}
 
 // Další příběh: první neodehraný za aktuálním, jinak prostě následující
 function nextStory(s) {
@@ -24,18 +52,19 @@ function nextStory(s) {
 }
 
 // Rychlá hra: náhodný anonymní scénář, přednostně dosud nehraný
-async function randomAuto(horizon) {
-  autoScenarios ??= (await import('./data/auto.json')).default
-  const results = loadResults()
-  const pool = autoScenarios.filter((s) => !horizon || s.horizon === horizon)
-  const fresh = pool.filter((s) => !results[s.id])
-  const list = fresh.length ? fresh : pool
-  return list[Math.floor(Math.random() * list.length)]
-}
-
 async function quick(horizon, replace = false) {
   homeMode = 1
-  open(await randomAuto(horizon), replace, () => quick(horizon, true))
+  const results = loadResults()
+  const pool = (await loadIndex()).filter((e) => !horizon || e.horizon === horizon)
+  const fresh = pool.filter((e) => !results[e.id])
+  const list = fresh.length ? fresh : pool
+  const s = await loadScenario(list[Math.floor(Math.random() * list.length)])
+  open(s, replace, () => quick(horizon, true))
+}
+
+async function startDaily() {
+  const s = await loadScenario(dailyPick(await loadIndex()))
+  open({ ...s, daily: true }, false, () => quick(null, true))
 }
 
 function open(s, replace = false, next = () => open(nextStory(s), true)) {
@@ -43,6 +72,7 @@ function open(s, replace = false, next = () => open(nextStory(s), true)) {
   show(gameView(s, { back: () => history.back(), next }))
 }
 
-window.addEventListener('popstate', home)
+window.addEventListener('popstate', (e) => show(screens[e.state?.screen] ? screens[e.state.screen]() : screens.home()))
+applyTheme()
 setupStatusBar()
-home()
+show(screens.home())

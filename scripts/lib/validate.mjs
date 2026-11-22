@@ -20,7 +20,8 @@ export function validateScenario(s) {
 
   if (!dates.some((d) => day(d) === s.decisionDate)) fail('datum rozhodnutí chybí v cenách')
   const future = dates.filter((d) => day(d) > s.decisionDate)
-  if (future.length < 5) fail('málo dat po datu rozhodnutí')
+  // Týdenní horizont má při svátku jen 4 obchodní dny
+  if (future.length < 4) fail('málo dat po datu rozhodnutí')
   if (dates[0] > s.historyStart && (toTs(dates[0]) - toTs(s.historyStart)) / DAY > 7) fail('historie začíná pozdě')
 
   const m = s.metrics

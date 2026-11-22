@@ -17,6 +17,7 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
   let revealed = false
   let progress = 0
   let tooltip = null
+  let band = null
   let dragIndex = null
   let drawing = false
   let width = 0
@@ -78,6 +79,7 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
     ctx.textAlign = 'center'
     ctx.fillText('DNES', splitX(), top() - 8)
 
+    drawBand()
     line(model.history.map((r) => [xHist(r.ts), y(r.price)]), color('--text'), 1.6)
 
     if (revealed) {
@@ -131,6 +133,19 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
     at(fmtMonth(model.history[0].date), left(), 'left')
     at(fmtDate(model.s.decisionDate), splitX(), 'center')
     at(fmtDate(model.future.at(-1).date.slice(0, 10)), right(), 'right')
+  }
+
+  // Kužel ±1σ: kam se cena při běžné volatilitě dostane zhruba ve 2 ze 3 případů
+  function drawBand() {
+    if (!band) return
+    const steps = Array.from({ length: 31 }, (_, i) => i / 30)
+    const upper = steps.map((t) => [xFut(t), yR(band * Math.sqrt(t))])
+    const lower = steps.map((t) => [xFut(t), yR(-band * Math.sqrt(t))]).reverse()
+    ctx.beginPath()
+    ;[...upper, ...lower].forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)))
+    ctx.closePath()
+    ctx.fillStyle = color('--band')
+    ctx.fill()
   }
 
   function drawPrediction() {
@@ -327,6 +342,10 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
     setMode(m) {
       mode = m
       canvas.style.touchAction = m === 'view' ? 'pan-y' : 'none'
+      render()
+    },
+    setBand(sigma) {
+      band = sigma
       render()
     },
     setZoom(z) {

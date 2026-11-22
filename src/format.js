@@ -44,3 +44,14 @@ export function el(tag, attrs = {}, ...children) {
   for (const c of children.flat()) if (c != null && c !== false) node.append(c)
   return node
 }
+
+// Změna v procentních bodech: 0.031 → „+3,1 p.b.“
+export function fmtPp(x) {
+  if (x == null || !isFinite(x)) return '–'
+  return (x > 0 ? '+' : '') + (x * 100).toLocaleString('cs-CZ', { maximumFractionDigits: 1 }) + ' p.b.'
+}
+
+export const fmtNum = (x, digits = 2) => (x == null || !isFinite(x) ? '–' : x.toLocaleString('cs-CZ', { maximumFractionDigits: digits }))
+
+// České skloňování: plural(1, 'hra', 'hry', 'her') → „1 hra“
+export const plural = (n, one, few, many) => `${n} ${n === 1 ? one : n >= 2 && n <= 4 ? few : many}`

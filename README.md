@@ -7,9 +7,11 @@ Mobilní hra na odhad vývoje akcií. Vidíš historický graf firmy, prostuduje
 
 Dva režimy:
 
-- **Příběhy** – 13 ručně připravených situací (NVIDIA před AI boomem, DeepSeek, cla 2025, GameStop…) s texty,
+- **Příběhy** – 17 ručně připravených situací (NVIDIA před AI boomem, DeepSeek, cla 2025, Target, Boeing, GameStop…) s texty,
   horizonty od dnů (hodinová data) po rok.
-- **Rychlá hra** – 125 automaticky vygenerovaných scénářů: anonymní americká firma v den výsledků (2016–2024).
+- **Rychlá hra** – přes 1000 automaticky vygenerovaných scénářů: anonymní americká firma (~110 firem, 16 odvětví)
+  v den výsledků (2012–2025).
+- **Denní výzva** – každý den jeden společný scénář pro všechny hráče.
   Vidíš jen čísla, graf a výňatky z tiskové zprávy, jméno se dozvíš po vyhodnocení.
 
 Postup:
@@ -22,6 +24,12 @@ Postup:
    (reakce na výsledky, obraty). Skóre je kalibrované: hádání bez informace dává průměrně ~35 bodů,
    správný směr ~65, správná konečná cena ~97 (hlídá to test `tests/calibration.test.js`).
 4. Profil: hodnost podle průměru posledních 10 her, série dní, odznaky a historie her.
+
+Další funkce: **Přehled** s 8 klíčovými čísly, ročním rozpětím a desítkou signálů po oblastech (valuace vs. konkurence
+i vlastní historie, zrychlení růstu, trend marží, dividendy a odkupy, typická reakce na výsledky, makro);
+tlačítko **±** ukáže pásmo běžného pohybu podle volatility; po vyhodnocení **sdílení** výsledku s emoji grafem
+a srovnání s „rovnou čárou“; **Statistiky** (trefený směr, sklon k optimismu/pesimismu, výsledky podle horizontu a odvětví);
+**Nastavení** (motiv, vibrace, reset postupu).
 
 ## Spuštění
 
@@ -78,7 +86,8 @@ Ikona a úvodní obrazovka jsou v `assets/` (zdroj `icon.svg`), Android varianty
 ## Data
 
 `npm run data` znovu stáhne data a vytvoří `src/data/scenarios.json`; `node scripts/build-data.mjs --auto`
-vytvoří i automatické scénáře (`src/data/auto.json`, seznam firem v `scripts/lib/auto.mjs`). Texty scénářů jsou v `scenarios/scenarios.mjs` –
+vytvoří i automatické scénáře (`src/data/auto/` – části po odvětvích + `index.json`, aplikace je načítá až při použití;
+seznam firem v `scripts/lib/auto.mjs`). Texty scénářů jsou v `scenarios/scenarios.mjs` –
 nový scénář = nový objekt v tomto souboru (ticker, období, situace, články, vysvětlení výsledku).
 
 Všechna data jsou jen taková, jaká byla **veřejně známá k datu rozhodnutí** – nic z budoucnosti.

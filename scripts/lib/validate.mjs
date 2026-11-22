@@ -1,6 +1,7 @@
 // Kontroly kvality dat jednoho scénáře – vrací seznam nalezených problémů
-const DAY = 86400000
-const toTs = (date) => Date.parse(date + 'T00:00:00Z')
+import { DAY, toTs } from '../../src/format.js'
+
+const day = (d) => d.slice(0, 10)
 
 export function validateScenario(s) {
   const problems = []
@@ -17,14 +18,15 @@ export function validateScenario(s) {
     if (Math.abs(Math.log(price / prevPrice)) > Math.log(3)) fail(`podezřelý skok ceny ${date}`)
   })
 
-  if (!dates.includes(s.decisionDate)) fail('datum rozhodnutí chybí v cenách')
-  const future = dates.filter((d) => d > s.decisionDate)
+  if (!dates.some((d) => day(d) === s.decisionDate)) fail('datum rozhodnutí chybí v cenách')
+  const future = dates.filter((d) => day(d) > s.decisionDate)
   if (future.length < 5) fail('málo dat po datu rozhodnutí')
   if (dates[0] > s.historyStart && (toTs(dates[0]) - toTs(s.historyStart)) / DAY > 7) fail('historie začíná pozdě')
 
   const m = s.metrics
-  const lastHistory = s.series.findLast(([d]) => d <= s.decisionDate)?.[1]
-  if (Math.abs(m.price / lastHistory - 1) > 0.001) fail('cena v metrikách nesedí s grafem')
+  const lastHistory = s.series.findLast(([d]) => day(d) <= s.decisionDate)?.[1]
+  // Hodinová svíčka se od oficiální zavírací ceny může lišit o pár centů
+  if (Math.abs(m.price / lastHistory - 1) > (s.intraday ? 0.01 : 0.001)) fail('cena v metrikách nesedí s grafem')
   if (!(m.marketCap > 0)) fail('chybí tržní kapitalizace')
   if (!(m.revenueTtm > 0)) fail('chybí tržby')
   for (const key of ['grossMargin', 'operatingMargin', 'netMargin']) {

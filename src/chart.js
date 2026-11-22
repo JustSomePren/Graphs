@@ -1,4 +1,4 @@
-import { clamp, fmtDate, fmtMonth, fmtPct, fmtPrice } from './format.js'
+import { clamp, fmtDate, fmtMonth, fmtPct, fmtPrice, fmtX } from './format.js'
 import { predictAt } from './model.js'
 
 const PAD = { top: 30, right: 52, bottom: 40, left: 6 }
@@ -130,7 +130,7 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
     }
     at(fmtMonth(model.history[0].date), left(), 'left')
     at(fmtDate(model.s.decisionDate), splitX(), 'center')
-    at(fmtDate(model.future.at(-1).date), right(), 'right')
+    at(fmtDate(model.future.at(-1).date.slice(0, 10)), right(), 'right')
   }
 
   function drawPrediction() {
@@ -152,16 +152,23 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
     }
   }
 
+  // Popis výsledků: čísla z výkazu a reakce trhu (u budoucích až po odhalení)
+  function earningsText(e, future) {
+    const lines = [`${e.preliminary ? 'Předběžné údaje' : 'Výsledky'} ${fmtDate(e.date)}${e.afterClose ? ' (po zavření)' : ''}`]
+    const snap = e.snapshot
+    if (snap) lines.push(`Tržby ${fmtPct(snap.growth)} r/r · P/E ${snap.pe ? fmtX(snap.pe) : '–'}`)
+    if (e.reaction != null && (!future || revealed)) lines.push(`Reakce akcie ${fmtPct(e.reaction)}`)
+    return lines.join('\n')
+  }
+
   function markers() {
     const list = [
       ...model.earnings
-        .filter((e) => e.date >= model.history[0].date)
-        .map((e) => ({
-          ts: Date.parse(e.date + 'T00:00:00Z'),
-          kind: 'E',
-          future: e.reactionDate > model.s.decisionDate,
-          text: `${e.preliminary ? 'Předběžné údaje' : 'Výsledky'} ${fmtDate(e.date)}${e.afterClose ? ' (po zavření)' : ''}`,
-        })),
+        .filter((e) => e.date >= model.history[0].date.slice(0, 10))
+        .map((e) => {
+          const future = e.reactionDate > model.s.decisionDate
+          return { ts: e.ts, kind: 'E', future, text: earningsText(e, future) }
+        }),
       ...model.events.map((e) => ({ ts: e.ts, kind: '•', future: e.date > model.s.decisionDate, text: `${fmtDate(e.date)}: ${e.label}` })),
     ]
     return list.map((m) => ({ ...m, x: xOf(m.ts) }))
@@ -193,18 +200,20 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
 
   function label(text, x, ly) {
     ctx.font = '600 12px system-ui'
-    const w = ctx.measureText(text).width + 14
+    const lines = text.split('\n')
+    const w = Math.min(width - 4, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 14)
+    const h = 8 + lines.length * 16
     const bx = clamp(x - w / 2, 2, width - w - 2)
-    const by = clamp(ly - 12, 2, height - 26)
+    const by = clamp(ly - 12, 2, height - h - 2)
     ctx.fillStyle = color('--card')
     ctx.strokeStyle = color('--grid')
     ctx.beginPath()
-    ctx.roundRect(bx, by, w, 24, 8)
+    ctx.roundRect(bx, by, w, h, 8)
     ctx.fill()
     ctx.stroke()
     ctx.fillStyle = color('--text')
     ctx.textAlign = 'left'
-    ctx.fillText(text, bx + 7, by + 16)
+    lines.forEach((l, i) => ctx.fillText(l, bx + 7, by + 16 + i * 16))
   }
 
   function drawTooltip() {

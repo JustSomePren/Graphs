@@ -9,7 +9,7 @@ export async function cikFor(ticker) {
 }
 
 const C = {
-  revenue: ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax'],
+  revenue: ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax', 'RevenuesNetOfInterestExpense'],
   costOfRevenue: ['CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold'],
   grossProfit: ['GrossProfit'],
   operatingIncome: ['OperatingIncomeLoss'],
@@ -44,7 +44,8 @@ export function factsKnownAt(g, concepts, unit, date, scale = () => 1) {
 }
 
 const durationDays = (f) => (toTs(f.end) - toTs(f.start)) / DAY
-const isQuarter = (days) => days > 75 && days < 105
+// Některé firmy (PepsiCo, Costco) mají kvartály po 12 a 16 týdnech
+const isQuarter = (days) => days > 75 && days < 125
 
 // Čtvrtletní hodnoty. Cash flow firmy vykazují jen kumulativně (3, 6, 9, 12 měsíců),
 // proto se kvartál dopočítá jako rozdíl dvou po sobě jdoucích kumulativních hodnot.
@@ -79,14 +80,15 @@ export function ttm(qs, end = qs.at(-1)?.end) {
 const growth = (now, before) => (now != null && before ? now / Math.abs(before) - 1 : null)
 const ratio = (a, b) => (a != null && b ? a / b : null)
 
-export async function fundamentals(ticker, date, splits) {
+// basis = datum, ke kterému přepočítáváme EPS a počty akcií (kvůli splitům)
+export async function fundamentals(ticker, date, splits, basis = date) {
   const cik = await cikFor(ticker)
   if (!cik) return null
   const json = await getJson(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, `facts-${cik}.json`)
   const g = json?.facts?.['us-gaap']
   if (!g) return null
 
-  const splitsSince = (f) => splitFactor(splits, f.filed, date)
+  const splitsSince = (f) => splitFactor(splits, f.filed, basis)
   const flow = (key) => quarters(factsKnownAt(g, C[key], 'USD', date))
   const instant = (key) => latestInstant(factsKnownAt(g, C[key], 'USD', date))
 
@@ -103,7 +105,7 @@ export async function fundamentals(ticker, date, splits) {
   const ni = flow('netIncome')
   const eps = quarters(factsKnownAt(g, ['EarningsPerShareDiluted'], 'USD/shares', date, (f) => 1 / splitsSince(f)))
   const shareFacts = factsKnownAt(g, ['WeightedAverageNumberOfDilutedSharesOutstanding'], 'shares', date, splitsSince)
-    .filter((f) => f.start && durationDays(f) < 105)
+    .filter((f) => f.start && durationDays(f) < 125)
     .sort((a, b) => a.end.localeCompare(b.end))
   const ocf = flow('operatingCashFlow')
   const capex = flow('capex')
@@ -234,6 +236,7 @@ export function classifyEarnings(all, cik) {
       date: f.date,
       afterClose: Number(f.time.slice(11, 13)) >= 16,
       preliminary,
+      report: preliminary ? null : report ?? null,
       url: folder(cik, f),
     }
   })

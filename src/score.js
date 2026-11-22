@@ -12,7 +12,7 @@ export function scorePrediction(model, points) {
 
   // Čím větší reálný pohyb, tím tolerantnější měřítko
   const maxMove = Math.max(...actual.map((a) => Math.abs(a.r)))
-  const scale = Math.max(0.07, 0.35 * maxMove)
+  const scale = Math.max(0.05, 0.3 * maxMove)
 
   const endError = Math.abs(predEnd - last)
   const endScore = 60 * Math.exp(-endError / scale)
@@ -49,10 +49,8 @@ const sameMove = (p, a) => Math.sign(p) === Math.sign(a) && Math.abs(p) >= 0.3 *
 function earningsChecks(model, pred) {
   const out = []
   for (const e of model.upcomingEarnings) {
-    const i = model.future.findIndex((r) => r.date === e.reactionDate)
-    if (i < 0) continue
-    const before = i === 0 ? { t: 0, r: 0 } : model.future[i - 1]
-    const after = model.future[i]
+    if (!e.window) continue
+    const { before, after } = e.window
     const move = after.r - before.r
     if (Math.abs(move) < 0.03) continue
     const guess = pred(after.t) - pred(before.t)

@@ -271,7 +271,7 @@ export const scenarios = [
       {
         title: 'Výsledky Q3 2020 (21. 10. 2020)',
         body:
-          'Pátý ziskový kvartál v řadě (podmínka pro S&P 500). Rekordní dodávky 139 300 aut, tržby 8,8 mld. USD. Firma drží cíl 500 000 dodaných aut za rok 2020. ' +
+          'Pátý ziskový kvartál v řadě (podmínka pro S&P 500). Rekordní dodávky téměř 140 000 aut, tržby 8,8 mld. USD. Firma drží cíl 500 000 dodaných aut za rok 2020. ' +
           'Část zisku tvoří prodej emisních povolenek jiným automobilkám.',
       },
       {
@@ -483,6 +483,154 @@ export const scenarios = [
         'Q1 FY22: tržby 805 mil. USD, ztráta 376 mil. USD.',
         'Z pandemického vítěze zpět na zem – stejný vzorec jako Zoom.',
         'Do konce roku akcie spadla na ~36 USD.',
+      ],
+    },
+  },
+  {
+    id: 'intc-2024-08',
+    ticker: 'INTC',
+    name: 'Intel',
+    title: 'Intel: obrat, nebo pád?',
+    horizon: '2 měsíce',
+    peers: ['AMD', 'NVDA', 'QCOM'],
+    historyStart: '2023-06-01',
+    decisionDate: '2024-08-01',
+    endDate: '2024-09-30',
+    situation:
+      'Je 1. srpna 2024 odpoledne. Intel dnes po zavření burzy zveřejní výsledky za Q2. Pod vedením Pata Gelsingera investuje desítky miliard do nových továren, ' +
+      'aby dohnal TSMC. Výrobní divize Intel Foundry přitom za rok 2023 vykázala provozní ztrátu 7 mld. USD. Akcie je od začátku roku zhruba o třetinu níž.',
+    events: [
+      { date: '2024-03-20', label: 'Dotace z CHIPS Act až 8,5 mld. USD' },
+      { date: '2024-04-02', label: 'Foundry: ztráta 7 mld. USD za 2023' },
+      { date: '2024-04-25', label: 'Q1: slabý výhled, akcie −9 %' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q1 2024 (25. 4. 2024)',
+        body:
+          'Tržby 12,7 mld. USD (+9 %), ale výhled na Q2 jen 12,5–13,5 mld. USD, pod očekáváním trhu. Vedení zmiňuje omezené výrobní kapacity a slabší poptávku mimo AI. Akcie den poté −9 %.',
+      },
+      {
+        title: 'Strategie IDM 2.0',
+        body:
+          'Intel chce vyrábět čipy i pro jiné firmy (foundry) a do roku 2025 dohnat TSMC technologií 18A. To znamená obří kapitálové výdaje, tlak na hrubou marži a hotovost. Dividenda zatím zůstává.',
+      },
+      {
+        title: 'Konkurence',
+        body:
+          'AMD bere Intelu podíl v serverech, NVIDIA ovládla AI akcelerátory, kde Intel s Gaudi téměř nehraje. V noteboocích přichází čipy Qualcomm Snapdragon X na architektuře Arm.',
+      },
+    ],
+    outcome: {
+      summary:
+        'Výsledky šokovaly: ztráta 1,6 mld. USD, slabý výhled na Q3, hrubá marže jen 35 %. Intel pozastavil dividendu, ohlásil škrty nákladů za 10 mld. USD a propuštění více než 15 % lidí. ' +
+        'Akcie 2. srpna −26 % – nejhorší den od roku 1974. V září cenu podpořily zprávy o zájmu Qualcommu o převzetí a o dohodě s Amazonem.',
+      points: [
+        'Tržby Q2 12,8 mld. USD (−1 %), výhled Q3 12,5–13,5 mld.',
+        'Zrušení dividendy je pro „hodnotové“ investory silný signál problémů.',
+        'Spekulace o převzetí vedly k částečnému odrazu.',
+      ],
+    },
+  },
+  {
+    id: 'nvda-2025-01',
+    ticker: 'NVDA',
+    name: 'NVIDIA',
+    title: 'NVIDIA a šok jménem DeepSeek',
+    horizon: 'dny',
+    intraday: true,
+    peers: ['AMD', 'AVGO', 'MSFT'],
+    historyStart: '2024-06-03',
+    decisionDate: '2025-01-24',
+    endDate: '2025-02-07',
+    situation:
+      'Je neděle 26. ledna 2025 večer. Čínský startup DeepSeek 20. ledna zveřejnil model R1, který se v testech matematiky a programování vyrovná nejlepším modelům OpenAI. ' +
+      'Podle firmy stál výpočet pro trénink jejího modelu V3 jen kolem 6 mil. USD na oslabených čipech H800. Aplikace DeepSeek přes víkend vystoupala na čelo amerického App Store. ' +
+      'Graf končí pátečním zavřením, posledních pár týdnů vidíš po hodinách.',
+    events: [
+      { date: '2024-06-10', label: 'Split akcií 10:1' },
+      { date: '2024-06-18', label: 'NVIDIA nejcennější firmou světa' },
+      { date: '2025-01-20', label: 'DeepSeek vydává model R1' },
+      { date: '2025-01-21', label: 'Projekt Stargate až za 500 mld. USD' },
+    ],
+    articles: [
+      {
+        title: 'DeepSeek R1',
+        body:
+          'Model s otevřenými vahami (licence MIT), výkonem srovnatelný s OpenAI o1 a s API za zlomek ceny. Pokud jde trénovat špičkovou AI s mnohem menším výpočetním výkonem, ' +
+          'může klesnout poptávka po drahých GPU. Protiargument: levnější AI = víc používání = víc výpočtů (Jevonsův paradox).',
+      },
+      {
+        title: 'Výsledky Q3 FY2025 (20. 11. 2024)',
+        body: 'Tržby 35,1 mld. USD (+94 %), data center 30,8 mld. USD. Výhled na Q4 37,5 mld. USD ±2 %. Poptávka po čipech Blackwell podle vedení výrazně převyšuje nabídku.',
+      },
+      {
+        title: 'Investice do AI',
+        body:
+          'Microsoft plánuje za fiskální rok 2025 utratit zhruba 80 mld. USD za AI datová centra, Meta 24. 1. ohlásila investice 60–65 mld. USD na rok 2025, ' +
+          'OpenAI se SoftBankem a Oraclem ohlásili projekt Stargate až za 500 mld. USD.',
+      },
+      {
+        title: 'Konkurence',
+        body: 'Broadcom vyrábí zakázkové AI čipy pro Google a další a v prosinci 2024 přesáhl tržní hodnotu 1 bil. USD. AMD nabízí akcelerátory MI300.',
+      },
+    ],
+    outcome: {
+      summary:
+        'Pondělí 27. ledna: NVIDIA −17 %, ztráta asi 590 mld. USD tržní hodnoty – největší jednodenní ztráta jedné firmy v historii. Padaly i Broadcom a další „AI“ akcie. ' +
+        'V úterý se akcie částečně odrazila (+9 %), ale 3. února při otevření spadla ještě níž – o víkendu USA podepsaly cla na Kanadu, Mexiko a Čínu. ' +
+        'Pak přišlo uklidnění: cla na Mexiko a Kanadu se odložila a velké firmy ve výsledcích potvrdily obří investice do AI.',
+      points: [
+        'Trh se bál nižší poptávky po GPU, fundamenty NVIDIE se přes noc nezměnily.',
+        'Velké propady kvalitních firem na „příběh“ se často částečně vrací.',
+        'Hodinový graf ukazuje, že největší pohyb přišel hned při otevření.',
+      ],
+    },
+  },
+  {
+    id: 'aapl-2025-04',
+    ticker: 'AAPL',
+    name: 'Apple',
+    title: 'Apple a celní „Den osvobození“',
+    horizon: 'dny',
+    intraday: true,
+    peers: ['MSFT', 'AMZN', 'DELL'],
+    historyStart: '2024-07-01',
+    decisionDate: '2025-04-02',
+    endDate: '2025-04-17',
+    situation:
+      'Je večer 2. dubna 2025. Prezident Trump po zavření burzy oznámil „reciproční“ cla: základních 10 % na veškerý dovoz a vyšší sazby pro desítky zemí – ' +
+      'Čína dalších 34 % (navíc k už platným 20 %), Vietnam 46 %, Indie 26 %. Apple vyrábí většinu iPhonů v Číně, část v Indii, další produkty ve Vietnamu. ' +
+      'Futures na akciové indexy po oznámení prudce padají.',
+    events: [
+      { date: '2025-01-30', label: 'Q1 FY25: rekordní tržby, Čína −11 %' },
+      { date: '2025-02-24', label: 'Apple slibuje 500 mld. USD investic v USA' },
+      { date: '2025-03-07', label: 'Odklad chytřejší Siri' },
+    ],
+    articles: [
+      {
+        title: 'Výsledky Q1 FY2025 (30. 1. 2025)',
+        body: 'Tržby 124,3 mld. USD (+4 %), EPS 2,40 USD. iPhone 69,1 mld. (−1 %), služby 26,3 mld. (+14 %), Velká Čína −11 %.',
+      },
+      {
+        title: 'Co cla znamenají pro Apple',
+        body:
+          'Pokud by Apple nezvedl ceny, cla by výrazně snížila jeho marže. Zdražení iPhonu zase může srazit poptávku. Otázky: dostane Apple výjimku jako v roce 2019? ' +
+          'Odpoví Čína odvetnými cly? Jak rychle lze přesunout výrobu do Indie?',
+      },
+      {
+        title: 'Valuace',
+        body: 'Apple se obchoduje za více než 30násobek zisku – trh za něj platí prémii za stabilitu. Prudká změna výhledu může tuto prémii rychle snížit.',
+      },
+    ],
+    outcome: {
+      summary:
+        'Apple za 4 obchodní dny ztratil přes 20 % (Čína 4. 4. odpověděla vlastním clem 34 %). 9. dubna Trump ohlásil 90denní odklad cel pro většinu zemí (ne pro Čínu) ' +
+        'a Apple vyskočil o 15 % – nejvíc od roku 1998. 11. dubna večer přišla výjimka pro smartphony a počítače. Přesto akcie do 17. 4. nevymazala celou ztrátu.',
+      points: [
+        'Extrémní volatilita oběma směry – rozhodovaly politické zprávy, ne fundamenty.',
+        'Kdo prodal v panice 8. dubna, prodal skoro na dně.',
+        'Bonus za tvar: pád – odraz – postupné uklidnění.',
       ],
     },
   },

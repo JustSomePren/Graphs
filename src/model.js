@@ -1,10 +1,12 @@
 import { toTs } from './format.js'
 
-// Připraví scénář pro graf i skórování
+export const day = (date) => date.slice(0, 10)
+
+// Připraví scénář pro graf i skórování. Řada může mít denní i hodinové body.
 export function buildModel(s) {
   const rows = s.series.map(([date, price]) => ({ date, ts: toTs(date), price }))
-  const history = rows.filter((r) => r.date <= s.decisionDate)
-  const future = rows.filter((r) => r.date > s.decisionDate)
+  const history = rows.filter((r) => day(r.date) <= s.decisionDate)
+  const future = rows.filter((r) => day(r.date) > s.decisionDate)
   const start = history[0].ts
   const now = history.at(-1).ts
   const end = future.at(-1).ts
@@ -16,9 +18,17 @@ export function buildModel(s) {
     r.r = Math.log(r.price / p0)
   }
 
+  // Okno reakce na výsledky: poslední bod před dnem reakce a poslední bod dne reakce
+  const reactionWindow = (reactionDate) => {
+    const after = future.findLast((r) => day(r.date) === reactionDate)
+    if (!after) return null
+    const before = future.findLast((r) => day(r.date) < reactionDate) ?? { t: 0, r: 0 }
+    return { before, after }
+  }
+
   const earnings = s.earnings.map((e) => {
-    const reaction = rows.find((r) => (e.afterClose ? r.date > e.date : r.date >= e.date))
-    return { ...e, ts: toTs(e.date), reactionDate: reaction?.date }
+    const reactionDate = e.reactionDate ?? rows.find((r) => (e.afterClose ? day(r.date) > e.date : day(r.date) >= e.date))?.date.slice(0, 10)
+    return { ...e, ts: toTs(e.date), reactionDate, window: reactionDate > s.decisionDate ? reactionWindow(reactionDate) : null }
   })
 
   return {
@@ -31,8 +41,9 @@ export function buildModel(s) {
     end,
     p0,
     tOf,
+    intraday: rows.some((r) => r.date.length > 10),
     earnings,
-    pastEarnings: earnings.filter((e) => e.date <= s.decisionDate && e.reactionDate <= s.decisionDate),
+    pastEarnings: earnings.filter((e) => e.reactionDate && e.reactionDate <= s.decisionDate),
     upcomingEarnings: earnings.filter((e) => e.reactionDate > s.decisionDate),
     events: (s.events ?? []).map((e) => ({ ...e, ts: toTs(e.date) })),
   }

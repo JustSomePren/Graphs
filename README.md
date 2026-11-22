@@ -5,13 +5,23 @@ Mobilní hra na odhad vývoje akcií. Vidíš historický graf firmy, prostuduje
 
 ## Jak hrát
 
-1. Vyber scénář (firma + datum + horizont: dny, týdny, měsíce, rok).
-2. Projdi záložky **Situace**, **Data**, **Konkurence** a **Rozšířené** (články, odkazy na originální tiskové zprávy na SEC).
-3. Do šedé zóny vpravo nakresli vývoj – **Prst** (volné kreslení) nebo **Body** (klepnutím vkládáš body, tažením je posouváš).
-   Tlačítko **Rozsah** mění měřítko osy, kdyby se ti odhad nevešel.
-4. **Vyhodnotit** – skóre 0–100:
-   - konečná cena 60 b., průběh 25 b., směr 15 b.,
-   - bonus až +15 b. za trefený tvar (reakce na earnings, obraty nahoru/dolů).
+Dva režimy:
+
+- **Příběhy** – 13 ručně připravených situací (NVIDIA před AI boomem, DeepSeek, cla 2025, GameStop…) s texty,
+  horizonty od dnů (hodinová data) po rok.
+- **Rychlá hra** – 125 automaticky vygenerovaných scénářů: anonymní americká firma v den výsledků (2016–2024).
+  Vidíš jen čísla, graf a výňatky z tiskové zprávy, jméno se dozvíš po vyhodnocení.
+
+Postup:
+
+1. Projdi záložky **Přehled** (situace + signály), **Data** (včetně tabulky minulých výsledků a reakcí trhu),
+   **Konkurence** a **Články** (texty + výňatky a výhled vedení z originální tiskové zprávy).
+   Klepnutím na „E“ v grafu uvidíš tržby, P/E a reakci akcie u každých minulých výsledků.
+2. Do modré zóny vpravo nakresli vývoj – **Prst** nebo **Body**. Tlačítko **↕** mění rozsah osy.
+3. **Vyhodnotit** – skóre 0–100 (konečná cena 60, průběh 25, směr 15) + bonus až 15 za tvar
+   (reakce na výsledky, obraty). Skóre je kalibrované: hádání bez informace dává průměrně ~35 bodů,
+   správný směr ~65, správná konečná cena ~97 (hlídá to test `tests/calibration.test.js`).
+4. Profil: hodnost podle průměru posledních 10 her, série dní, odznaky a historie her.
 
 ## Spuštění
 
@@ -32,7 +42,7 @@ přepočtené splity, nesmyslné marže a hlavně, aby se do scénáře nedostal
 
 ## Android (Pixel)
 
-APK se sestaví automaticky v GitHub Actions (záložka *Actions* → poslední běh → artefakt `kam-to-pujde-apk`).
+Testovací APK se sestaví automaticky v GitHub Actions (záložka *Actions* → poslední běh → artefakt `kam-to-pujde-debug-apk`).
 
 Ručně:
 
@@ -42,11 +52,33 @@ cd android && ./gradlew assembleDebug
 # APK: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Instalace na telefon: pošli si APK do telefonu a povol instalaci z neznámých zdrojů, nebo `adb install app-debug.apk`.
+### Podepsaný release (Google Play)
+
+Podpisový klíč **není v gitu**. Build ho hledá v `android/keystore.properties`:
+
+```properties
+storeFile=release.jks
+storePassword=…
+keyAlias=kamtopujde
+keyPassword=…
+```
+
+```bash
+cd android && ./gradlew assembleRelease bundleRelease
+# APK: app/build/outputs/apk/release/app-release.apk
+# AAB pro Google Play: app/build/outputs/bundle/release/app-release.aab
+```
+
+V GitHub Actions se release sestaví, když v *Settings → Secrets → Actions* nastavíš:
+`ANDROID_KEYSTORE_BASE64` (výstup `base64 -w0 release.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+**Klíč si dobře zálohuj** – bez něj nejde vydat aktualizaci aplikace se stejným podpisem.
+
+Ikona a úvodní obrazovka jsou v `assets/` (zdroj `icon.svg`), Android varianty vytvoří `npx capacitor-assets generate --android`.
 
 ## Data
 
-`npm run data` znovu stáhne data a vytvoří `src/data/scenarios.json`. Texty scénářů jsou v `scenarios/scenarios.mjs` –
+`npm run data` znovu stáhne data a vytvoří `src/data/scenarios.json`; `node scripts/build-data.mjs --auto`
+vytvoří i automatické scénáře (`src/data/auto.json`, seznam firem v `scripts/lib/auto.mjs`). Texty scénářů jsou v `scenarios/scenarios.mjs` –
 nový scénář = nový objekt v tomto souboru (ticker, období, situace, články, vysvětlení výsledku).
 
 Všechna data jsou jen taková, jaká byla **veřejně známá k datu rozhodnutí** – nic z budoucnosti.
@@ -65,7 +97,15 @@ Měsíční makro údaje se berou se zpožděním publikace (CPI ~45 dní), kvar
 historický short interest burzy (Nasdaq/NYSE) také. Free API (Finnhub, Alpha Vantage, Tiingo) mají buď jen aktuální hodnoty, nebo vyžadují klíč
 a jejich podmínky nedovolují data šířit v aplikaci. Očekávání trhu jsou proto jen v článcích, tak jak o nich psala média.
 
-Ceny: oficiální licencovaný zdroj zdarma neexistuje – ceny vlastní burzy. Pro soukromou hru stačí Yahoo, pro veřejné vydání by bylo
-potřeba nahradit ho placeným zdrojem (např. Polygon, Tiingo) – stačí upravit `scripts/lib/prices.mjs`.
+Ceny: oficiální licencovaný zdroj zdarma neexistuje – ceny vlastní burzy. Pro soukromou hru stačí Yahoo. Pro veřejné vydání
+je připravený adaptér na **Tiingo** (licencovaný zdroj s osobním i komerčním tarifem): `TIINGO_TOKEN=… npm run data`.
+Hodinová data (scénáře „dny“) zatím umí jen Yahoo.
+
+**Ověření textů:** čísla v textech scénářů jsou zkontrolovaná proti originálním tiskovým zprávám na SEC
+(NVIDIA, Meta, Netflix, Apple, CrowdStrike, Zoom, Peloton, Intel, GameStop – vše sedí; u Tesly upraveno na „téměř 140 000“ podle zprávy).
+Texty o tržních reakcích a zprávách z médií (např. DeepSeek, cla) vychází z veřejně známých událostí.
+
+**Anonymní scénáře:** jméno a ticker firmy se z výňatků tiskových zpráv automaticky odstraňují (test to hlídá),
+názvy produktů ale mohou firmu občas prozradit.
 
 Nejde o investiční doporučení.

@@ -1,10 +1,13 @@
 export const DAY = 86400000
-export const toTs = (date) => Date.parse(date + 'T00:00:00Z')
+export const toTs = (date) => Date.parse(date.length > 10 ? date + 'Z' : date + 'T00:00:00Z')
 
 const czDate = new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' })
 const czShort = new Intl.DateTimeFormat('cs-CZ', { month: 'short', year: '2-digit', timeZone: 'UTC' })
 
-export const fmtDate = (date) => czDate.format(new Date(toTs(date)))
+const czTime = new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })
+
+// U hodinových bodů ukáže i čas (newyorský, jak běží burza)
+export const fmtDate = (date) => (date.length > 10 ? czTime.format(new Date(toTs(date))) + ' NY' : czDate.format(new Date(toTs(date))))
 export const fmtMonth = (date) => czShort.format(new Date(toTs(date)))
 
 export function fmtPrice(x) {

@@ -63,9 +63,9 @@ await test('domovská obrazovka ukazuje všechny scénáře', async (page) => {
 })
 
 await test('filtr podle horizontu', async (page) => {
-  await page.click('.segmented button:has-text("Krátké")')
+  await page.click('.segmented button:text-is("Krátké")')
   const short = await page.locator('.scenario').count()
-  await page.click('.segmented button:has-text("Dlouhé")')
+  await page.click('.segmented button:text-is("Dlouhé")')
   const long = await page.locator('.scenario').count()
   assert.ok(short > 0 && long > 0 && short + long < scenarios.length)
 })
@@ -103,6 +103,56 @@ for (const [i, s] of scenarios.entries()) {
   })
 }
 
+await test('hodinová data: graf i vyhodnocení', async (page) => {
+  await page.click('.scenario:has-text("DeepSeek")')
+  assert.equal(await page.locator('.legend .pill').innerText(), 'hodinová data')
+  await drawFinger(page, (t) => 0.5 + 0.1 * t)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  // Propad a následný odraz v hodinových datech se musí objevit jako kontrolní body tvaru
+  assert.match(await page.locator('.chips').innerText(), /Pokles [\s\S]*Růst/)
+})
+
+await test('minulé výsledky: tabulka a popis v grafu', async (page) => {
+  await page.click('.scenario:has-text("Meta: rok efektivity")')
+  await page.click('.tabs button:has-text("Data")')
+  const table = await page.locator('.section:has-text("Minulé výsledky") table').innerText()
+  assert.match(table, /-24,6 %|−24,6 %|-25 %/)
+  await page.click('.tabs button:has-text("Články")')
+  assert.ok((await page.locator('.pane').innerText()).includes('Tisková zpráva'))
+})
+
+await test('rychlá hra: anonymní firma a odhalení jména', async (page) => {
+  await page.click('.segmented.big button:has-text("Rychlá hra")')
+  await page.click('.quick .primary')
+  await page.waitForSelector('canvas')
+  const before = await page.locator('main').innerText()
+  assert.ok(before.includes('Anonymní firma'), 'chybí anonymní označení')
+  await page.click('.tabs button:has-text("Konkurence")')
+  assert.ok((await page.locator('.peers').innerText()).includes('Tato firma'))
+  assert.equal(await page.locator('.pane a').count(), 0, 'odkaz na SEC by prozradil firmu')
+  await drawFinger(page, () => 0.42)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  assert.match(await page.locator('.result').innerText(), /Šlo o .+\([A-Z.]+\)/)
+  await page.click('.primary:has-text("Další firma")')
+  await page.waitForSelector('canvas')
+  assert.ok((await page.locator('main').innerText()).includes('Anonymní firma'))
+})
+
+await test('profil: hodnost, odznaky a historie po hře', async (page) => {
+  await page.click('.scenario >> nth=0')
+  await drawFinger(page, () => 0.4)
+  await page.click('.primary')
+  await page.waitForSelector('.result')
+  assert.ok((await page.locator('.new-badges').innerText()).includes('První odhad'))
+  await page.click('[aria-label="Zpět na seznam"]')
+  await page.waitForSelector('.profile')
+  assert.equal(await page.locator('.badge-icon:not(.locked)').count() >= 1, true)
+  await page.click('.profile .link')
+  assert.equal(await page.locator('.history .row').count(), 1)
+})
+
 await test('kreslení: zpět a smazat', async (page) => {
   await page.click('.scenario >> nth=0')
   await drawPoints(page, [[0.5, 0.4], [1, 0.4]])
@@ -133,11 +183,11 @@ await test('výsledek se uloží, další scénář a návrat zpět', async (pag
   await page.waitForSelector('.result')
   const firstTitle = await page.locator('.topbar strong').innerText()
   await page.click('.primary:has-text("Další scénář")')
+  await page.waitForTimeout(100)
   assert.notEqual(await page.locator('.topbar strong').innerText(), firstTitle)
   await page.click('[aria-label="Zpět na seznam"]')
   await page.waitForSelector('.scenario')
   assert.equal(await page.locator('.badge').count(), 1, 'skóre se neuložilo')
-  assert.match(await page.locator('.stat >> nth=0').innerText(), /^1 \/ /)
 })
 
 await test('tlačítko zpět v systému (Android) vrací na seznam', async (page) => {

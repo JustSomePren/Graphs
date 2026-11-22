@@ -725,3 +725,126 @@ table.peers {
   width: 100%;
   margin: 8px 0 0;
 }
+
+/* --- profil, rychlá hra --- */
+
+.segmented.big {
+  margin: 16px 0 12px;
+}
+
+.segmented.big button {
+  padding: 10px 6px;
+  font-size: 15px;
+}
+
+.profile {
+  margin-top: 16px;
+}
+
+.profile-top {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-top .grow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-top strong {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.profile .stat {
+  flex: none;
+  min-width: 72px;
+  background: var(--card-2);
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 4px;
+  flex-wrap: wrap;
+}
+
+.badge-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--card-2);
+  font-size: 18px;
+}
+
+.badge-icon.locked {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.history .row b {
+  font-size: 16px;
+}
+
+.great-text {
+  color: var(--up);
+}
+
+.ok-text {
+  color: var(--warn);
+}
+
+.low-text {
+  color: var(--down);
+}
+
+.quick {
+  display: grid;
+  gap: 12px;
+}
+
+.quick .stats {
+  margin: 0;
+}
+
+.quick .stat {
+  background: var(--card-2);
+}
+
+.new-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--zone);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.quote li {
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.peers.compact th,
+.peers.compact td {
+  padding: 8px 4px;
+  font-size: 12px;
+}
+
+.peers.compact td:first-child {
+  padding-left: 0;
+  font-weight: 600;
+}
+
+.legend .pill {
+  margin-left: auto;
+}

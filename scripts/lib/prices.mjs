@@ -1,30 +1,73 @@
 import { DAY, getJson, isoDay, toTs } from './fetch.mjs'
 
-// basis = datum, ke kterému chceme ceny vidět (bez pozdějších splitů)
-export async function prices(ticker, from, to, basis = to) {
-  const p1 = Math.floor((toTs(from) - 400 * DAY) / 1000)
-  // Konec až do dneška, jinak Yahoo nevrátí pozdější splity
-  const p2 = Math.floor(Date.now() / 1000)
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${p1}&period2=${p2}&interval=1d&events=split`
-  const coversStart = (j) => j.chart?.result?.[0]?.timestamp?.[0] * 1000 < toTs(from) + 10 * DAY
-  const json = await getJson(url, `px-${ticker}-${from}-${to}.json`, coversStart)
+const yahoo = (ticker, p1, p2, interval) =>
+  `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${p1}&period2=${p2}&interval=${interval}&events=split`
+
+// Denní ceny od `from` až do dneška (jinak Yahoo nevrátí pozdější splity)
+// Tiingo (licencovaný zdroj): zapne se proměnnou TIINGO_TOKEN. Vrací stejný tvar jako Yahoo –
+// ceny upravené o všechny pozdější splity.
+async function loadTiingo(ticker, from) {
+  const symbol = ticker === '^GSPC' ? 'SPY' : ticker.replace('.', '-')
+  const url = `https://api.tiingo.com/tiingo/daily/${symbol}/prices?startDate=${isoDay(toTs(from) - 400 * DAY)}&token=${process.env.TIINGO_TOKEN}`
+  const list = await getJson(url, `tiingo-${symbol}-${from}.json`, (j) => Array.isArray(j) && j.length > 50)
+  if (!list) return null
+  const splits = list.filter((r) => r.splitFactor && r.splitFactor !== 1).map((r) => ({ date: r.date.slice(0, 10), ratio: r.splitFactor }))
+  return {
+    rows: list.map((r) => {
+      const date = r.date.slice(0, 10)
+      const close = r.close / splitFactor(splits, date)
+      return { date, close, dollarVolume: r.close * r.volume }
+    }),
+    splits,
+  }
+}
+
+// Všechno od roku 2014 se stahuje jedním dotazem na firmu, starší data zvlášť
+async function loadDaily(ticker, from) {
+  if (process.env.TIINGO_TOKEN) return loadTiingo(ticker, from)
+  const start = from > '2015-01-01' ? '2015-01-01' : from
+  const p1 = Math.floor((toTs(start) - 400 * DAY) / 1000)
+  // Yahoo občas vrátí jen pár posledních dní – taková odpověď se neukládá
+  const complete = (j) => j.chart?.result?.[0]?.timestamp?.length > 50
+  const json = await getJson(yahoo(ticker, p1, Math.floor(Date.now() / 1000), '1d'), `px-${ticker}-${start}.json`, complete)
   const r = json?.chart?.result?.[0]
   if (!r?.timestamp) return null
   const { close, volume } = r.indicators.quote[0]
-  const splits = Object.values(r.events?.splits ?? {}).map((s) => ({
-    date: isoDay(s.date * 1000),
-    ratio: s.numerator / s.denominator,
-  }))
-  const factor = splitFactor(splits, basis)
-  const rows = r.timestamp
-    .map((t, i) => ({ date: isoDay(t * 1000), close: close[i] * factor, dollarVolume: close[i] * volume[i] }))
-    .filter((row) => row.close && row.date <= isoDay(toTs(to) + 5 * DAY))
-  return { rows, splits }
+  return {
+    rows: r.timestamp
+      .map((t, i) => ({ date: isoDay(t * 1000), close: close[i], dollarVolume: close[i] * volume[i] }))
+      .filter((row) => row.close),
+    splits: Object.values(r.events?.splits ?? {}).map((s) => ({ date: isoDay(s.date * 1000), ratio: s.numerator / s.denominator })),
+  }
 }
 
-// Ceny z Yahoo jsou upravené o všechny pozdější splity – vracíme je do stavu k datu rozhodnutí
 export const splitFactor = (splits, after, upTo = '9999') =>
   splits.filter((s) => s.date > after && s.date <= upTo).reduce((f, s) => f * s.ratio, 1)
+
+// Ceny z Yahoo jsou upravené o všechny pozdější splity – vracíme je do stavu k datu `basis`
+export async function prices(ticker, from, to, basis = to) {
+  const raw = await loadDaily(ticker, from)
+  if (!raw) return null
+  const factor = splitFactor(raw.splits, basis)
+  const last = isoDay(toTs(to) + 5 * DAY)
+  return {
+    rows: raw.rows.filter((r) => r.date <= last).map((r) => ({ ...r, close: r.close * factor })),
+    splits: raw.splits,
+  }
+}
+
+// Hodinové ceny (Yahoo je drží jen ~2 roky zpět). Datum má tvar YYYY-MM-DDTHH:MM (UTC).
+export async function hourly(ticker, from, to, basis) {
+  const p1 = Math.floor(toTs(from) / 1000)
+  const p2 = Math.floor((toTs(to) + 2 * DAY) / 1000)
+  const json = await getJson(yahoo(ticker, p1, p2, '60m'), `px1h-${ticker}-${from}-${to}.json`, (j) => j.chart?.result?.[0]?.timestamp?.length > 10)
+  const r = json.chart.result[0]
+  const raw = await loadDaily(ticker, from)
+  const factor = splitFactor(raw.splits, basis)
+  return r.timestamp
+    .map((t, i) => ({ date: new Date(t * 1000).toISOString().slice(0, 16), close: r.indicators.quote[0].close[i] * factor }))
+    .filter((row) => row.close && row.date.slice(0, 10) <= to)
+}
 
 const logReturns = (closes) => closes.slice(1).map((c, i) => Math.log(c / closes[i]))
 const mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length
@@ -65,6 +108,5 @@ function beta(rows, market) {
   const ma = mean(a)
   const mm = mean(m)
   const cov = mean(a.map((x, i) => (x - ma) * (m[i] - mm)))
-  const varM = mean(m.map((x) => (x - mm) ** 2))
-  return cov / varM
+  return cov / mean(m.map((x) => (x - mm) ** 2))
 }

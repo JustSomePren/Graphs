@@ -9,8 +9,11 @@ Dva režimy:
 
 - **Příběhy** – 17 ručně připravených situací (NVIDIA před AI boomem, DeepSeek, cla 2025, Target, Boeing, GameStop…) s texty,
   horizonty od dnů (hodinová data) po rok.
-- **Rychlá hra** – přes 1000 automaticky vygenerovaných scénářů: anonymní americká firma (~110 firem, 16 odvětví)
-  v den výsledků (2012–2025).
+- **Události** – 18 událostí (odchody a nástupy CEO, válka na Ukrajině, útok na Izrael, covid, vakcína, krize SVB,
+  propady trhu 2015/2018/2024, volby 2016, havárie 737 MAX, Cambridge Analytica). Ke každé vybereš firmu a horizont
+  (týden až 5 let) a odhaduješ, jak událost akcii ovlivnila. Co se dělo potom, uvidíš v časové ose až po vyhodnocení.
+- **Rychlá hra** – 1381 automaticky vygenerovaných scénářů: anonymní americká firma (~110 firem, 16 odvětví)
+  v den výsledků (2012–2025), horizonty týden, měsíc, 3 měsíce, 6 měsíců, rok a 5 let.
 - **Denní výzva** – každý den jeden společný scénář pro všechny hráče.
   Vidíš jen čísla, graf a výňatky z tiskové zprávy, jméno se dozvíš po vyhodnocení.
 
@@ -19,8 +22,10 @@ Postup:
 1. Projdi záložky **Přehled** (situace + signály), **Data** (včetně tabulky minulých výsledků a reakcí trhu),
    **Konkurence** a **Články** (texty + výňatky a výhled vedení z originální tiskové zprávy).
    Klepnutím na „E“ v grafu uvidíš tržby, P/E a reakci akcie u každých minulých výsledků.
-2. Do modré zóny vpravo nakresli vývoj – **Prst** nebo **Body**. Tlačítko **⛶** otevře kreslení na celou obrazovku
-   na šířku: historie vyplní displej, **Budoucnost ▶** posune graf do zóny pro odhad. Dvěma prsty (nebo v režimu **✋ Posun**)
+2. Graf ukazuje nejdřív jen historii – posouvá se prstem (**Prohlížet**). Po přepnutí na **Malovat** nebo **Body**
+   se graf přesune na budoucnost a z historie zůstane vidět jen kousek; procentní vodítka pomáhají kreslit.
+   Vrstvy **S&P 500**, **Ø50** a **Ø200** přidají srovnání s indexem a klouzavé průměry. Tlačítko **⛶** otevře graf
+   na celou obrazovku na šířku. Dvěma prsty (nebo v režimu **✋ Posun**)
    se graf posouvá a přibližuje; když při kreslení dojedeš k horní/dolní hraně, rozsah se sám rozšíří (max. 30×).
    Na šířku se celá hra rozloží do dvou sloupců (graf + analýza).
 3. **Vyhodnotit** – skóre 0–100 (konečná cena 60, průběh 25, směr 15) + bonus až 15 za tvar
@@ -95,7 +100,7 @@ Ikona a úvodní obrazovka jsou v `assets/` (zdroj `icon.svg`), Android varianty
 ## Data
 
 `npm run data` znovu stáhne data a vytvoří `src/data/scenarios.json`; `node scripts/build-data.mjs --auto`
-vytvoří i automatické scénáře (`src/data/auto/` – části po odvětvích + `index.json`, aplikace je načítá až při použití;
+vytvoří i automatické scénáře a události (`src/data/events.json`, zadání v `scenarios/events.mjs`; automatické v `src/data/auto/` – části po odvětvích + `index.json`, aplikace je načítá až při použití;
 seznam firem v `scripts/lib/auto.mjs`). Texty scénářů jsou v `scenarios/scenarios.mjs` –
 nový scénář = nový objekt v tomto souboru (ticker, období, situace, články, vysvětlení výsledku).
 

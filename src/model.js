@@ -31,9 +31,17 @@ export function buildModel(s) {
     return { ...e, ts: toTs(e.date), reactionDate, window: reactionDate > s.decisionDate ? reactionWindow(reactionDate) : null }
   })
 
+  // S&P 500 přepočtený tak, aby v den rozhodnutí měl stejnou hodnotu jako akcie (srovnání výkonu)
+  let market = []
+  if (s.market?.length) {
+    const base = s.market.findLast(([d]) => day(d) <= s.decisionDate)?.[1]
+    if (base) market = s.market.map(([date, v]) => ({ date, ts: toTs(date), price: (p0 * v) / base }))
+  }
+
   return {
     s,
     rows,
+    market,
     history,
     future,
     start,

@@ -6,7 +6,9 @@ const auto = loadAuto()
 import { buildModel } from '../src/model.js'
 import { scorePrediction } from '../src/score.js'
 
-const all = [...stories, ...auto]
+import events from '../src/data/events.json'
+
+const all = [...stories, ...auto, ...events]
 
 function average(strategy) {
   const scores = all.map((s) => {

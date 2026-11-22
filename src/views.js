@@ -6,6 +6,7 @@ import { derived, signals } from './signals.js'
 import { dailyDone, earnedBadges, getFlag, loadHistory, loadResults, loadSettings, rank, resetProgress, saveResult, saveSettings, setFlag, streak, BADGES } from './storage.js'
 import { applyTheme, enterLandscape, exitLandscape, share, success, tap } from './native.js'
 import { playerStats, shareText } from './extras.js'
+import { icon } from './icons.js'
 
 const HORIZONS = [
   { label: 'Vše', test: () => true },
@@ -13,6 +14,7 @@ const HORIZONS = [
   { label: 'Střední', test: (days) => days > 45 && days <= 120 },
   { label: 'Dlouhé', test: (days) => days > 120 },
 ]
+const QUICK_HORIZONS = ['Vše', 'týden', 'měsíc', '3 měsíce', '6 měsíců', 'rok', '5 let']
 
 const horizonDays = (s) => (toTs(s.endDate) - toTs(s.decisionDate)) / DAY
 const tier = (score) => (score >= 80 ? 'great' : score >= 55 ? 'ok' : 'low')
@@ -20,16 +22,19 @@ const tier = (score) => (score >= 80 ? 'great' : score >= 55 ? 'ok' : 'low')
 // Obtížnost = jak velký pohyb je při dané volatilitě a horizontu běžný
 export function difficulty(s) {
   const expectedMove = (s.metrics.volatility ?? 0.4) * Math.sqrt(horizonDays(s) / 365)
-  return expectedMove < 0.1 ? 'Lehká' : expectedMove < 0.22 ? 'Střední' : 'Těžká'
+  return expectedMove < 0.1 ? 'lehká' : expectedMove < 0.22 ? 'střední' : 'těžká'
 }
+
+const iconButton = (name, label, onclick, cls = '') => el('button', { class: `icon-btn ${cls}`, 'aria-label': label, title: label, onclick }, icon(name))
 
 // --- domovská obrazovka ---
 
-export function homeView(stories, { open, quick, daily, stats, settings, mode = 0 }) {
+export function homeView(stories, { open, quick, daily, events, stats, settings, mode = 0 }) {
   const results = loadResults()
-  const body = el('div')
-  const showMode = (i) => body.replaceChildren(i ? quickPanel(quick) : storiesPanel(stories, results, open))
-  const modes = segmented([`📚 Příběhy (${stories.length})`, '🎲 Rychlá hra'], mode, showMode, 'segmented big')
+  const body = el('div', { class: 'tab-body' })
+  const panels = [() => storiesPanel(stories, results, open), () => eventsPanel(events, results), () => quickPanel(quick)]
+  const showMode = (i) => body.replaceChildren(panels[i]())
+  const modes = segmented(['Příběhy', 'Události', 'Rychlá hra'], mode, showMode, 'tabs main-tabs')
   showMode(mode)
 
   return el(
@@ -37,45 +42,45 @@ export function homeView(stories, { open, quick, daily, stats, settings, mode = 
     { class: 'screen' },
     el(
       'header',
-      { class: 'hero' },
-      el('div', { class: 'hero-top' }, el('span', { class: 'logo' }, '📈'), el('button', { class: 'icon-btn', 'aria-label': 'Statistiky', onclick: stats }, '📊'), el('button', { class: 'icon-btn', 'aria-label': 'Nastavení', onclick: settings }, '⚙️')),
-      el('h1', {}, 'Kam to půjde?'),
-      el('p', {}, 'Buď investorem v konkrétní den. Prostuduj data, nakresli vývoj a porovnej s realitou.'),
+      { class: 'masthead' },
+      el('div', { class: 'wordmark' }, el('b', {}, 'KAM TO PŮJDE'), el('small', {}, 'trénink odhadu vývoje akcií')),
+      iconButton('stats', 'Statistiky', stats),
+      iconButton('gear', 'Nastavení', settings),
     ),
     getFlag('intro') ? null : introCard(),
-    dailyCard(daily),
-    profileCard(),
+    dailyRow(daily),
+    profileStrip(),
     modes,
     body,
-    el('p', { class: 'foot' }, 'Data: SEC EDGAR, FRED, denní a hodinové ceny. Hra není investiční doporučení.'),
+    el('p', { class: 'foot' }, 'Data: SEC EDGAR, FRED, denní a hodinové ceny. Nejde o investiční doporučení.'),
   )
 }
 
 // Denní výzva – info o dnešním scénáři se načte až s indexem automatických scénářů
-function dailyCard(daily) {
+function dailyRow(daily) {
   const done = dailyDone()
   const info = el('small', {}, 'Načítám…')
-  const card = el(
+  const row = el(
     'button',
-    { class: 'card daily' + (done ? ' done' : ''), onclick: () => daily.start() },
-    el('span', { class: 'daily-icon' }, done ? '✅' : '📅'),
-    el('div', { class: 'grow' }, el('strong', {}, done ? 'Denní výzva splněna' : 'Denní výzva'), info),
-    el('span', { class: 'chev' }, '›'),
+    { class: 'daily' + (done ? ' done' : ''), onclick: () => daily.start() },
+    icon(done ? 'check' : 'calendar'),
+    el('span', { class: 'grow' }, el('b', {}, done ? 'Denní výzva splněna' : 'Denní výzva'), info),
+    icon('next'),
   )
-  daily.info.then((pick) => (info.textContent = `Anonymní firma · ${pick.sector} · ${pick.horizon}${done ? ' · zítra nová' : ''}`)).catch(() => card.remove())
-  return card
+  daily.info.then((pick) => (info.textContent = `Anonymní firma · ${pick.sector} · ${pick.horizon}${done ? ' · zítra nová' : ''}`)).catch(() => row.remove())
+  return row
 }
 
 function introCard() {
   const card = el(
     'section',
-    { class: 'card intro' },
-    el('h3', {}, 'Jak hrát'),
+    { class: 'notice intro' },
+    el('b', {}, 'Jak hrát'),
     el(
       'ol',
       {},
-      el('li', {}, 'Vyber příběh, nebo si zahraj rychlou hru s anonymní firmou.'),
-      el('li', {}, 'Prostuduj situaci a data, pak prstem nakresli, kam půjde cena.'),
+      el('li', {}, 'Vyber příběh, událost, nebo rychlou hru s anonymní firmou.'),
+      el('li', {}, 'Prostuduj graf a data. Pak přepni na Malovat a nakresli, kam půjde cena.'),
       el('li', {}, 'Nejvíc se počítá konečná cena, bonus dostaneš za trefený tvar.'),
     ),
     el('button', { class: 'link', onclick: () => (setFlag('intro'), card.remove()) }, 'Rozumím'),
@@ -83,36 +88,79 @@ function introCard() {
   return card
 }
 
-function profileCard() {
+function profileStrip() {
   const history = loadHistory()
   const r = rank(history)
-  const badges = earnedBadges()
-  const list = el('div', { class: 'history', hidden: true }, history.slice(0, 15).map((h) => el('div', { class: 'row' }, el('span', {}, h.title, el('small', {}, fmtDate(h.date))), el('b', { class: tier(h.score) + '-text' }, h.score))))
   return el(
     'section',
-    { class: 'card profile' },
-    el(
-      'div',
-      { class: 'profile-top' },
-      el('div', { class: 'grow' }, el('small', {}, 'Hodnost'), el('strong', {}, r.label), el('small', {}, r.next)),
-      stat('Průměr', r.avg ?? '–'),
-      stat('Série', `${streak(history)} 🔥`),
-    ),
-    el(
-      'div',
-      { class: 'badges' },
-      BADGES.map((b) => el('span', { class: 'badge-icon' + (badges.includes(b) ? '' : ' locked'), title: b.label, 'aria-label': `${b.label}${badges.includes(b) ? '' : ' (zamčeno)'}` }, b.icon)),
-    ),
-    history.length ? el('button', { class: 'link', onclick: () => (list.hidden = !list.hidden) }, `Historie her (${history.length})`) : null,
-    list,
+    { class: 'strip' },
+    el('div', {}, el('small', {}, 'Hodnost'), el('b', {}, r.label)),
+    el('div', {}, el('small', {}, 'Průměr'), el('b', { class: 'num' }, r.avg ?? '–')),
+    el('div', {}, el('small', {}, 'Série dní'), el('b', { class: 'num' }, streak(history))),
+    el('div', {}, el('small', {}, 'Odznaky'), el('b', { class: 'num' }, `${earnedBadges().length}/${BADGES.length}`)),
   )
 }
 
 function storiesPanel(stories, results, open) {
-  const list = el('div', { class: 'list' })
-  const render = (filter) => list.replaceChildren(...stories.filter((s) => filter.test(horizonDays(s))).map((s) => scenarioCard(s, results[s.id], open)))
+  const list = el('div', { class: 'watchlist' })
+  const render = (filter) => list.replaceChildren(...stories.filter((s) => filter.test(horizonDays(s))).map((s) => storyRow(s, results[s.id], open)))
   render(HORIZONS[0])
-  return el('div', {}, segmented(HORIZONS.map((h) => h.label), 0, (i) => render(HORIZONS[i])), list)
+  return el('div', {}, segmented(HORIZONS.map((h) => h.label), 0, (i) => render(HORIZONS[i]), 'chips'), list)
+}
+
+function storyRow(s, result, open) {
+  return el(
+    'button',
+    { class: 'wl-row', onclick: () => open(s) },
+    el('span', { class: 'tk' }, s.ticker),
+    el('span', { class: 'wl-main' }, el('b', {}, s.title), el('small', {}, `${fmtDate(s.decisionDate)} · ${s.horizon} · ${difficulty(s)}`)),
+    sparkline(s),
+    el('span', { class: `wl-score ${result ? tier(result.best) : ''}` }, result ? String(result.best) : '–'),
+  )
+}
+
+// Události: rozbalíš kartu a vybereš firmu a horizont
+function eventsPanel(events, results) {
+  const list = el('div', { class: 'events' }, el('p', { class: 'muted' }, 'Načítám události…'))
+  events.list.then((groups) => {
+    const categories = [...new Set(groups.map((g) => g.categoryLabel))]
+    list.replaceChildren(
+      el('p', { class: 'muted small' }, 'Odhadni, jak konkrétní událost pohne akciemi vybraných firem. Situaci popisujeme jen tak, jak byla známá v daný moment.'),
+      ...categories.flatMap((cat) => [el('h4', {}, cat), ...groups.filter((g) => g.categoryLabel === cat).map((g) => eventCard(g, results, events.start))]),
+    )
+  })
+  return list
+}
+
+function eventCard(g, results, start) {
+  let ticker = g.tickers[0]
+  let horizon = null
+  const body = el('div', { class: 'ev-body', hidden: true })
+  const played = g.items.filter((s) => results[s.id]).length
+  const renderBody = () => {
+    const horizons = g.items.filter((s) => s.ticker === ticker).map((s) => s.horizon)
+    if (!horizons.includes(horizon)) horizon = horizons[0]
+    const chosen = g.items.find((s) => s.ticker === ticker && s.horizon === horizon)
+    body.replaceChildren(
+      el('small', {}, 'Firma'),
+      segmented(g.tickers, g.tickers.indexOf(ticker), (i) => ((ticker = g.tickers[i]), renderBody()), 'chips'),
+      el('small', {}, 'Horizont'),
+      segmented(horizons, horizons.indexOf(horizon), (i) => ((horizon = horizons[i]), renderBody()), 'chips'),
+      el('button', { class: 'primary', onclick: () => start(chosen.id) }, `Hrát: ${ticker} · ${horizon}${results[chosen.id] ? ` (nejlépe ${results[chosen.id].best})` : ''}`),
+    )
+  }
+  renderBody()
+  const head = el(
+    'button',
+    { class: 'ev-head', 'aria-expanded': 'false', onclick: () => {
+      body.hidden = !body.hidden
+      head.setAttribute('aria-expanded', String(!body.hidden))
+    } },
+    el('span', { class: 'ev-date num' }, fmtDate(g.date)),
+    el('span', { class: 'wl-main' }, el('b', {}, g.title), el('small', {}, `${g.tickers.join(' · ')}${played ? ` · odehráno ${played}/${g.items.length}` : ''}`)),
+    icon('next'),
+  )
+  return el('section', { class: 'ev-card' }, head, body)
 }
 
 function quickPanel(quick) {
@@ -121,30 +169,19 @@ function quickPanel(quick) {
   let horizon = null
   return el(
     'section',
-    { class: 'card quick' },
-    el('h3', {}, 'Anonymní firma, skutečné výsledky'),
-    el('p', { class: 'muted' }, 'Náhodně vybraná americká firma v den zveřejnění výsledků. Nevíš, kdo to je – máš jen čísla, graf a výňatky z tiskové zprávy. Jméno se dozvíš po vyhodnocení.'),
-    el('div', { class: 'stats' }, stat('Odehráno', history.length), stat('Průměr', avg)),
-    segmented(['Vše', 'Týden', 'Měsíc', '3 měsíce'], 0, (i) => (horizon = [null, 'týden', 'měsíc', '3 měsíce'][i])),
-    el('button', { class: 'primary', onclick: () => quick(horizon) }, '🎲 Hrát náhodnou firmu'),
-  )
-}
-
-function scenarioCard(s, result, open) {
-  return el(
-    'button',
-    { class: 'card scenario', onclick: () => open(s) },
-    el('div', { class: 'scenario-top' }, el('span', { class: 'ticker' }, s.ticker), el('span', { class: 'pill' }, s.horizon), result ? el('span', { class: `badge ${tier(result.best)}`, title: 'Nejlepší skóre' }, `✓ ${result.best}`) : null),
-    el('strong', {}, s.title),
-    el('small', {}, `${fmtDate(s.decisionDate)} · ${difficulty(s)}`),
-    sparkline(s),
+    { class: 'quick' },
+    el('p', {}, 'Náhodně vybraná americká firma v den zveřejnění výsledků. Nevíš, kdo to je – máš jen čísla, graf a výňatky z tiskové zprávy. Jméno se dozvíš po vyhodnocení.'),
+    el('div', { class: 'strip' }, el('div', {}, el('small', {}, 'Odehráno'), el('b', { class: 'num' }, history.length)), el('div', {}, el('small', {}, 'Průměr'), el('b', { class: 'num' }, avg))),
+    el('small', {}, 'Horizont'),
+    segmented(QUICK_HORIZONS, 0, (i) => (horizon = i ? QUICK_HORIZONS[i] : null), 'chips'),
+    el('button', { class: 'primary', onclick: () => quick(horizon) }, icon('shuffle'), 'Hrát náhodnou firmu'),
   )
 }
 
 // Náhled historie bez budoucnosti
 function sparkline(s) {
   const history = s.series.filter(([d]) => d.slice(0, 10) <= s.decisionDate).map(([, p]) => Math.log(p))
-  const step = Math.max(1, Math.floor(history.length / 80))
+  const step = Math.max(1, Math.floor(history.length / 60))
   const pts = history.filter((_, i) => i % step === 0)
   const lo = Math.min(...pts)
   const hi = Math.max(...pts)
@@ -160,6 +197,8 @@ function sparkline(s) {
 
 // --- hra ---
 
+const MODES = ['view', 'finger', 'points']
+
 export function gameView(s, { back, next }) {
   const model = buildModel(s)
   const state = { revealed: false }
@@ -172,11 +211,11 @@ export function gameView(s, { back, next }) {
 
   const refresh = () => {
     action.disabled = !chart.complete
-    action.textContent = chart.complete ? 'Vyhodnotit' : chart.points.length ? 'Dokresli až ke konci' : 'Nakresli odhad do modré zóny'
+    action.textContent = chart.complete ? 'Vyhodnotit' : chart.points.length ? 'Dokresli až ke konci' : 'Přepni na Malovat a nakresli odhad'
   }
 
-  const zoomButton = el('button', { class: 'icon-btn wide', 'aria-label': 'Rozsah osy', onclick: () => cycleZoom() })
-  const showZoom = () => (zoomButton.textContent = `↕ ×${ZOOMS[zoomIndex].toLocaleString('cs-CZ')}`)
+  const zoomButton = el('button', { class: 'icon-btn wide', 'aria-label': 'Rozsah osy', title: 'Rozsah osy', onclick: () => cycleZoom() })
+  const showZoom = () => zoomButton.replaceChildren(icon('zoom'), el('span', { class: 'num' }, `×${ZOOMS[zoomIndex].toLocaleString('cs-CZ')}`))
   const cycleZoom = () => {
     zoomIndex = (zoomIndex + 1) % ZOOMS.length
     chart.setZoom(ZOOMS[zoomIndex])
@@ -184,7 +223,8 @@ export function gameView(s, { back, next }) {
   }
 
   const extra = derived(s)
-  const bandButton = el('button', { class: 'icon-btn', 'aria-label': 'Pásmo běžného pohybu', 'aria-pressed': 'false', onclick: () => toggleBand() }, '±')
+  const bandButton = iconButton('band', 'Pásmo běžného pohybu', () => toggleBand())
+  bandButton.setAttribute('aria-pressed', 'false')
   const toggleBand = (on = bandButton.getAttribute('aria-pressed') !== 'true') => {
     bandButton.setAttribute('aria-pressed', String(on))
     bandButton.classList.toggle('active', on)
@@ -192,31 +232,36 @@ export function gameView(s, { back, next }) {
     saveSettings({ band: on })
   }
 
-  const MODES = ['finger', 'points', 'pan']
+  const modeSwitch = segmented(
+    [
+      [icon('hand'), 'Prohlížet'],
+      [icon('pencil'), 'Malovat'],
+      [icon('dots'), 'Body'],
+    ],
+    0,
+    (i) => chart.setMode(MODES[i]),
+    'segmented modes',
+  )
+
   const toolbar = el(
     'div',
     { class: 'toolbar-wrap' },
+    el('div', { class: 'toolbar' }, modeSwitch, iconButton('expand', 'Kreslit na celou obrazovku', () => openFullscreen(), 'accent')),
     el(
       'div',
-      { class: 'toolbar' },
-      segmented(['✍️ Prst', '📍 Body', '✋ Posun'], 0, (i) => chart.setMode(MODES[i])),
-      el('button', { class: 'icon-btn accent', 'aria-label': 'Kreslit na celou obrazovku', onclick: () => openFullscreen() }, '⛶'),
-    ),
-    el(
-      'div',
-      { class: 'toolbar' },
+      { class: 'toolbar small' },
       zoomButton,
       extra.expectedMove ? bandButton : null,
-      el('button', { class: 'icon-btn', 'aria-label': 'Celý graf', onclick: () => chart.showAll() }, '⟲'),
-      el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => chart.undo() }, '↶'),
-      el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => chart.clear() }, '✕'),
+      iconButton('reset', 'Celý graf', () => chart.showAll()),
+      iconButton('undo', 'Vrátit krok', () => chart.undo()),
+      iconButton('close', 'Smazat odhad', () => chart.clear()),
     ),
   )
 
-  // Kreslení na celou obrazovku na šířku: historie přes celý displej, budoucnost posunem doprava
+  // Kreslení na celou obrazovku na šířku: historie přes celý displej, při malování se graf přesune na budoucnost
   async function openFullscreen() {
     const canvasFull = el('canvas', { class: 'chart-full', role: 'img', 'aria-label': chartDescription(s, model) })
-    const hint = el('p', { class: 'fs-hint' }, 'Kresli jedním prstem · posun a přiblížení dvěma prsty · u okraje se graf sám rozšíří')
+    const hint = el('p', { class: 'fs-hint' }, 'Prohlížet: posun prstem · Malovat: kresli do zóny vpravo · dva prsty: posun a přiblížení')
     let full
     const close = async () => {
       chart.setPoints(full.points)
@@ -226,15 +271,16 @@ export function gameView(s, { back, next }) {
       document.body.classList.remove('no-scroll')
       await exitLandscape()
     }
+    const current = MODES.indexOf(chart.mode ?? 'view')
     const side = el(
       'div',
       { class: 'fs-side' },
-      segmented(['✍️', '📍', '✋'], 0, (i) => full.setMode(MODES[i]), 'segmented vertical'),
-      el('button', { class: 'icon-btn accent label-btn', 'aria-label': 'Posunout do budoucnosti', onclick: () => full.showFuture() }, 'Budoucnost ▶'),
-      el('button', { class: 'icon-btn', 'aria-label': 'Celý graf', onclick: () => full.showAll() }, '⟲'),
-      el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => full.undo() }, '↶'),
-      el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => full.clear() }, '✕'),
-      el('button', { class: 'primary small', onclick: close }, '✓ Hotovo'),
+      segmented([icon('hand'), icon('pencil'), icon('dots')], current, (i) => full.setMode(MODES[i]), 'segmented vertical'),
+      el('button', { class: 'icon-btn label-btn', 'aria-label': 'Posunout do budoucnosti', onclick: () => full.showFuture() }, 'Budoucnost', icon('next')),
+      iconButton('reset', 'Celý graf', () => full.showAll()),
+      iconButton('undo', 'Vrátit krok', () => full.undo()),
+      iconButton('close', 'Smazat odhad', () => full.clear()),
+      el('button', { class: 'primary small', onclick: close }, icon('check'), 'Hotovo'),
     )
     const overlay = el('div', { class: 'fullscreen', role: 'dialog', 'aria-label': 'Kreslení na celou obrazovku' }, el('div', { class: 'fs-chart' }, canvasFull, hint), side)
     document.body.append(overlay)
@@ -243,19 +289,43 @@ export function gameView(s, { back, next }) {
     full = createChart(canvasFull, model, { layout: 'full', points: chart.points, onChange: (c) => (tap(), chart.setPoints(c.points), refresh()) })
     full.setZoom(chart.zoom)
     full.setPoints(chart.points)
-    full.setMode('finger')
+    full.setLayers(chart.layers)
+    full.setMode(MODES[current])
     if (bandButton.getAttribute('aria-pressed') === 'true') full.setBand(extra.expectedMove)
     setTimeout(() => hint.classList.add('fade'), 4000)
   }
 
-  const legend = el('div', { class: 'legend' }, el('span', { class: 'key hist' }, 'Historie'), el('span', { class: 'key guess' }, 'Tvůj odhad'), model.intraday ? el('span', { class: 'pill' }, 'hodinová data') : null)
-  const subtitle = el('small', {}, `${name} · odhad do ${fmtDate(model.future.at(-1).date.slice(0, 10))} · ${difficulty(s)}`)
+  // Vrstvy grafu: srovnání s indexem a klouzavé průměry
+  const layerButton = (label, key, title) => {
+    const b = el('button', { class: 'layer', 'aria-pressed': 'false', title, onclick: () => {
+      const on = b.getAttribute('aria-pressed') !== 'true'
+      b.setAttribute('aria-pressed', String(on))
+      chart.setLayers({ [key]: on })
+    } }, label)
+    return b
+  }
+  const legend = el(
+    'div',
+    { class: 'legend' },
+    el('span', { class: 'key hist' }, 'Cena'),
+    el('span', { class: 'key guess' }, 'Odhad'),
+    model.intraday ? el('span', { class: 'pill' }, 'hodinová data') : null,
+    el(
+      'span',
+      { class: 'layers' },
+      model.market.length ? layerButton('S&P 500', 'market', 'Srovnání s indexem S&P 500') : null,
+      layerButton('Ø50', 'ma50', 'Klouzavý průměr 50 dní'),
+      layerButton('Ø200', 'ma200', 'Klouzavý průměr 200 dní'),
+    ),
+  )
+  const title = s.daily ? 'Denní výzva' : s.auto ? 'Kam půjde akcie po výsledcích?' : s.title
+  const subtitle = el('small', {}, `${name}${s.categoryLabel ? ` · ${s.categoryLabel}` : ''} · odhad do ${fmtDate(model.future.at(-1).date.slice(0, 10))} · ${difficulty(s)}`)
 
   const screen = el(
     'main',
     { class: 'screen game' },
-    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět na seznam', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, s.daily ? '📅 Denní výzva' : s.auto ? 'Kam půjde akcie po výsledcích?' : s.title), subtitle)),
-    el('section', { class: 'card chart-card' }, legend, canvas),
+    el('div', { class: 'topbar' }, iconButton('back', 'Zpět na seznam', back), el('div', { class: 'grow' }, el('strong', {}, title), subtitle)),
+    el('section', { class: 'chart-card' }, legend, canvas),
     toolbar,
     firstTip(),
     resultBox,
@@ -264,7 +334,9 @@ export function gameView(s, { back, next }) {
   )
 
   chart = createChart(canvas, model, { onChange: () => (tap(), refresh()) })
-  chart.setMode('finger')
+  const setMode = chart.setMode
+  chart.setMode = (m) => ((chart.mode = m), setMode(m))
+  chart.setMode('view')
   if (loadSettings().band && extra.expectedMove) toggleBand(true)
   zoomIndex = ZOOMS.indexOf(chart.zoom)
   showZoom()
@@ -281,12 +353,12 @@ export function gameView(s, { back, next }) {
       state.revealed = true
       success()
       if (s.auto) subtitle.textContent = `${s.ticker} · ${s.sector}`
-      legend.append(el('span', { class: `key real ${score.actualEnd >= 0 ? 'up' : 'down'}` }, 'Realita'))
+      legend.querySelector('.layers')?.before(el('span', { class: `key real ${score.actualEnd >= 0 ? 'up' : 'down'}` }, 'Realita'))
       resultBox.replaceChildren(resultCard(s, model, score, badges, chart.points))
       resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' })
       action.dataset.done = '1'
       action.disabled = false
-      action.textContent = s.auto ? 'Další firma →' : 'Další scénář →'
+      action.textContent = s.auto ? 'Další firma' : 'Další scénář'
     })
   })
 
@@ -298,8 +370,8 @@ function firstTip() {
   if (getFlag('tip-band')) return null
   const tip = el(
     'p',
-    { class: 'note tip' },
-    '💡 Tlačítko ± ukáže, jak velký pohyb je u této akcie v daném horizontu běžný. Klepnutím na „E“ v grafu uvidíš čísla minulých výsledků.',
+    { class: 'notice tip' },
+    'Graf posouvej prstem. Pro odhad přepni na Malovat – graf se přesune na budoucnost. Klepnutím na „E“ uvidíš čísla minulých výsledků.',
     el('button', { class: 'link', onclick: () => (setFlag('tip-band'), tip.remove()) }, 'OK'),
   )
   return tip
@@ -315,23 +387,23 @@ function resultCard(s, model, score, badges, points) {
   const flatTotal = flat.total + flat.bonus
   const shareButton = el('button', { class: 'secondary', onclick: async () => {
     const result = await share(shareText(s, model, points, score))
-    if (result === 'copied') shareButton.textContent = '✓ Zkopírováno do schránky'
-  } }, '↗ Sdílet výsledek')
-  const verdict = score.total >= 85 ? 'Věštec 🔮' : score.total >= 65 ? 'Dobrý odhad 👍' : score.total >= 40 ? 'Napůl trefa' : 'Trh tě přechytračil'
+    if (result === 'copied') shareButton.replaceChildren(icon('check'), 'Zkopírováno do schránky')
+  } }, icon('share'), 'Sdílet výsledek')
+  const verdict = score.total >= 85 ? 'Výborný odhad' : score.total >= 65 ? 'Dobrý odhad' : score.total >= 40 ? 'Napůl trefa' : 'Trh šel jinam'
   return el(
     'section',
-    { class: 'card result' },
+    { class: 'result' },
     el(
       'div',
       { class: 'score-head' },
-      el('div', { class: `ring ${tier(score.total)}`, style: `--p:${score.total}`, role: 'img', 'aria-label': `Skóre ${score.total + score.bonus}` }, el('b', {}, String(score.total + score.bonus))),
-      el('div', {}, el('strong', {}, verdict), el('small', {}, `${score.total} b.${score.bonus ? ` + ${score.bonus} bonus za tvar` : ''}`)),
+      el('b', { class: `score-big ${tier(score.total)}`, role: 'img', 'aria-label': `Skóre ${score.total + score.bonus}` }, String(score.total + score.bonus)),
+      el('div', {}, el('strong', {}, verdict), el('small', { class: 'num' }, `${score.total} + ${score.bonus} bonus za tvar`)),
     ),
-    badges.length ? el('div', { class: 'new-badges' }, badges.map((b) => el('span', {}, `${b.icon} Nový odznak: ${b.label}`))) : null,
+    badges.length ? el('div', { class: 'new-badges' }, badges.map((b) => el('span', {}, `Nový odznak: ${b.label}`))) : null,
     el('div', { class: 'compare' }, stat('Tvůj odhad', fmtPct(score.predEnd)), stat('Realita', fmtPct(score.actualEnd)), stat('Rozdíl', `${Math.round(Math.abs(score.gapPoints))} p.b.`)),
-    el('div', { class: 'bars' }, score.parts.map((p) => el('div', { class: 'bar' }, el('span', {}, p.label), el('i', { style: `--w:${(p.value / p.max) * 100}%` }), el('b', {}, `${p.value}/${p.max}`)))),
-    el('p', { class: 'naive' }, score.total + score.bonus > flatTotal ? `👏 Porazil jsi „rovnou čáru“ (odhad beze změny by dostal ${flatTotal} b.)` : `🤏 Rovná čára (žádná změna) by dostala ${flatTotal} b. – tentokrát lepší než tvůj odhad`),
-    score.checks.length ? el('div', { class: 'chips' }, score.checks.map((c) => el('span', { class: `chip-tag ${c.ok ? 'good' : ''}` }, (c.ok ? '✓ ' : '✗ ') + c.label))) : null,
+    el('div', { class: 'bars' }, score.parts.map((p) => el('div', { class: 'bar' }, el('span', {}, p.label), el('i', { style: `--w:${(p.value / p.max) * 100}%` }), el('b', { class: 'num' }, `${p.value}/${p.max}`)))),
+    el('p', { class: 'naive' }, score.total + score.bonus > flatTotal ? `Porazil jsi „rovnou čáru“ – odhad beze změny by dostal ${flatTotal} b.` : `Rovná čára (žádná změna) by dostala ${flatTotal} b. – tentokrát víc než tvůj odhad.`),
+    score.checks.length ? el('ul', { class: 'checks' }, score.checks.map((c) => el('li', { class: c.ok ? 'ok' : '' }, icon(c.ok ? 'check' : 'close'), c.label))) : null,
     el('h3', {}, 'Proč to dopadlo takhle'),
     el('p', {}, s.outcome.summary),
     s.outcome.points.length ? el('ul', { class: 'plain' + (s.outcome.english ? ' quote' : '') }, s.outcome.points.map((p) => el('li', {}, p))) : null,
@@ -367,7 +439,7 @@ function overviewPane(s, model) {
     {},
     el('p', { class: 'lead' }, s.situation),
     model.upcomingEarnings.length
-      ? el('p', { class: 'note' }, '📅 V období vyjdou výsledky: ', model.upcomingEarnings.map((e) => `${fmtDate(e.date)}${e.afterClose ? ' po zavření burzy' : ''}`).join(', '))
+      ? el('p', { class: 'note' }, 'V období vyjdou výsledky: ', model.upcomingEarnings.map((e) => `${fmtDate(e.date)}${e.afterClose ? ' po zavření burzy' : ''}`).join(', '))
       : null,
     el('h4', {}, 'Klíčová čísla'),
     el(
@@ -383,6 +455,7 @@ function overviewPane(s, model) {
       tile('Volatilita', fmtPct(m.volatility, false), `beta ${num(m.beta)}`),
     ),
     rangeBar(m, d),
+    timeline(s, model),
     el('h4', {}, 'Fakta v kostce'),
     areas.map((area) =>
       el('div', { class: 'signal-group' }, el('span', { class: 'area' }, area), el('ul', { class: 'signals' }, list.filter((x) => x.area === area).map((x) => el('li', {}, x.text)))),
@@ -391,7 +464,24 @@ function overviewPane(s, model) {
   )
 }
 
-const tile = (label, value, hint) => el('div', { class: 'tile' }, el('span', {}, label), el('b', {}, value), el('small', {}, hint))
+// Časová osa: minulé události a výsledky (s reakcí trhu), nejnovější nahoře
+function timeline(s, model) {
+  const items = [
+    ...model.events.filter((e) => e.date <= s.decisionDate).map((e) => ({ date: e.date, label: e.label })),
+    ...model.pastEarnings.map((e) => ({ date: e.date, label: e.preliminary ? 'Předběžné údaje' : 'Výsledky', move: e.reaction })),
+  ]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 12)
+  if (!items.length) return null
+  return el(
+    'div',
+    {},
+    el('h4', {}, 'Časová osa'),
+    el('ol', { class: 'timeline' }, items.map((it) => el('li', {}, el('span', { class: 'num' }, fmtDate(it.date)), el('span', {}, it.label), el('span', { class: 'num' }, it.move != null ? fmtPct(it.move) : '')))),
+  )
+}
+
+const tile = (label, value, hint) => el('div', { class: 'tile' }, el('span', {}, label), el('b', { class: 'num' }, value), el('small', {}, hint))
 
 // Kde je cena v rámci ročního rozpětí
 function rangeBar(m, d) {
@@ -615,7 +705,7 @@ function pressCard(press, showLink) {
 const stat = (label, value) => el('div', { class: 'stat' }, el('b', {}, String(value)), el('span', {}, label))
 
 function segmented(labels, active, onPick, cls = 'segmented') {
-  const buttons = labels.map((label, i) => el('button', { class: i === active ? 'active' : '', role: 'tab', 'aria-selected': String(i === active), onclick: () => pick(i) }, label))
+  const buttons = labels.map((label, i) => el('button', { class: i === active ? 'active' : '', role: 'tab', 'aria-selected': String(i === active), onclick: () => pick(i) }, ...(Array.isArray(label) ? label : [label])))
   const pick = (i) => {
     buttons.forEach((b, j) => {
       b.classList.toggle('active', i === j)
@@ -632,18 +722,22 @@ export function statsView(back) {
   const st = playerStats(loadHistory())
   const bar = (label, value, max) => el('div', { class: 'bar' }, el('span', {}, label), el('i', { style: `--w:${max ? (value / max) * 100 : 0}%` }), el('b', {}, String(value)))
   const maxTier = Math.max(1, ...st.tiers.map((t) => t.count))
-  const bias = st.bias == null ? null : st.bias > 0.03 ? `Jsi optimista: tvé odhady jsou v průměru o ${fmtPct(st.bias, false)} výš než realita.` : st.bias < -0.03 ? `Jsi pesimista: tvé odhady jsou v průměru o ${fmtPct(-st.bias, false)} níž než realita.` : 'Tvé odhady nemají výrazný sklon nahoru ani dolů. 👍'
+  const bias = st.bias == null ? null : st.bias > 0.03 ? `Jsi optimista: tvé odhady jsou v průměru o ${fmtPct(st.bias, false)} výš než realita.` : st.bias < -0.03 ? `Jsi pesimista: tvé odhady jsou v průměru o ${fmtPct(-st.bias, false)} níž než realita.` : 'Tvé odhady nemají výrazný sklon nahoru ani dolů.'
   return el(
     'main',
     { class: 'screen' },
-    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, 'Statistiky'), el('small', {}, plural(st.games, 'hra', 'hry', 'her')))),
+    el('div', { class: 'topbar' }, iconButton('back', 'Zpět', back), el('div', { class: 'grow' }, el('strong', {}, 'Statistiky'), el('small', {}, plural(st.games, 'hra', 'hry', 'her')))),
+    el('h4', {}, 'Odznaky'),
+    el('div', { class: 'badges' }, BADGES.map((b) => el('span', { class: 'badge-chip' + (earnedBadges().includes(b) ? '' : ' locked') }, b.label))),
     st.games
       ? [
           el('div', { class: 'stats' }, stat('Průměr', st.avg), stat('Nejlepší', st.best), stat('Trefený směr', st.directionHit != null ? `${Math.round(st.directionHit * 100)} %` : '–')),
-          bias ? el('p', { class: 'note' }, '🧭 ', bias) : null,
+          bias ? el('p', { class: 'note' }, bias) : null,
           el('section', { class: 'card' }, el('h4', {}, 'Rozložení skóre'), el('div', { class: 'bars' }, st.tiers.map((t) => bar(t.label, t.count, maxTier)))),
           groupCard('Podle horizontu', st.byHorizon),
           groupCard('Podle odvětví', st.bySector),
+          el('h4', {}, 'Poslední hry'),
+          el('section', { class: 'card rows history' }, loadHistory().slice(0, 20).map((h) => row(h.title, String(h.score), `${fmtDate(h.date)} · ${h.horizon ?? ''}`))),
         ]
       : el('p', { class: 'note' }, 'Zatím žádné hry. Zahraj si první scénář a statistiky se tu objeví.'),
   )
@@ -673,7 +767,7 @@ export function settingsView(back) {
   const reset = el('button', { class: 'danger', onclick: () => {
     if (reset.dataset.confirm) {
       resetProgress()
-      reset.textContent = '✓ Postup smazán'
+      reset.textContent = 'Postup smazán'
       return
     }
     reset.dataset.confirm = '1'
@@ -683,7 +777,7 @@ export function settingsView(back) {
   return el(
     'main',
     { class: 'screen' },
-    el('div', { class: 'topbar' }, el('button', { class: 'icon-btn', 'aria-label': 'Zpět', onclick: back }, '←'), el('div', { class: 'grow' }, el('strong', {}, 'Nastavení'))),
+    el('div', { class: 'topbar' }, iconButton('back', 'Zpět', back), el('div', { class: 'grow' }, el('strong', {}, 'Nastavení'))),
     el('h4', {}, 'Vzhled'),
     segmented(['Podle systému', 'Světlý', 'Tmavý'], themes.indexOf(settings.theme), (i) => {
       saveSettings({ theme: themes[i] })
@@ -694,6 +788,6 @@ export function settingsView(back) {
     el('section', { class: 'card rows' }, toggle('Vibrace', 'při kreslení a vyhodnocení', 'haptics'), toggle('Pásmo běžného pohybu', 'zapnout ± v grafu automaticky', 'band')),
     el('h4', {}, 'Data'),
     el('section', { class: 'card' }, reset),
-    el('p', { class: 'foot' }, 'Kam to půjde? · verze 1.3 · data SEC EDGAR, FRED, Yahoo Finance'),
+    el('p', { class: 'foot' }, 'Kam to půjde? · verze 1.4 · data SEC EDGAR, FRED, Yahoo Finance'),
   )
 }

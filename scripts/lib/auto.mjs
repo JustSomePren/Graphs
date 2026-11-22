@@ -5,7 +5,7 @@ import { prices } from './prices.mjs'
 import { pressRelease } from './press.mjs'
 import { buildScenario } from './scenario.mjs'
 
-const SECTORS = {
+export const SECTORS = {
   software: ['MSFT', 'ORCL', 'ADBE', 'CRM', 'INTU', 'NOW', 'IBM'],
   polovodiče: ['NVDA', 'AMD', 'INTC', 'QCOM', 'TXN', 'MU', 'AMAT', 'AVGO'],
   internet: ['AMZN', 'GOOGL', 'META', 'NFLX', 'EBAY', 'BKNG', 'PYPL'],
@@ -42,7 +42,7 @@ function random(seed) {
 }
 
 // „ADOBE INC“ → „Adobe Inc“ (EDGAR vrací názvy často velkými písmeny)
-const prettyName = (name) => (name === name.toUpperCase() ? name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : name)
+export const prettyName = (name) => (name === name.toUpperCase() ? name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : name)
 
 const pct = (x) => (x == null ? '–' : `${x > 0 ? '+' : ''}${Math.round(x * 100)} %`)
 
@@ -53,13 +53,22 @@ function scrub(text, words) {
   return words.reduce((t, w) => t.replace(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}('s)?\\b`, 'gi'), 'the Company$1'), text)
 }
 
-async function companyWords(ticker) {
+export async function companyWords(ticker) {
   const cik = await cikFor(ticker)
   const facts = await getJson(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, `facts-${cik}.json`)
   const full = (facts?.entityName ?? '').replace(/[.,]/g, '').trim()
   const first = full.split(' ')[0]
   return [...new Set([full, first, ticker].filter((w) => w.length > 1))]
 }
+
+// Dlouhé horizonty: vlastní generátor náhody, aby se krátké scénáře nezměnily
+const LONG_HORIZONS = [
+  { days: 182, label: '6 měsíců', history: 730 },
+  { days: 365, label: 'rok', history: 1095 },
+  { days: 1826, label: '5 let', history: 1826 },
+]
+const PER_COMPANY_LONG = 4
+const DATA_END = '2026-10-01'
 
 export async function buildAuto() {
   const rand = random(42)
@@ -74,14 +83,22 @@ export async function buildAuto() {
       const picks = new Set()
       while (picks.size < Math.min(PER_COMPANY, releases.length)) picks.add(Math.floor(rand() * releases.length))
 
-      for (const i of picks) {
+      const longPicks = new Set()
+      const longRand = random(1000 + cik.length + Number(cik.slice(-4)))
+      const longFit = releases.filter((r) => isoDay(toTs(r.date) + 1826 * DAY) < DATA_END)
+      while (longPicks.size < Math.min(PER_COMPANY_LONG, longFit.length)) longPicks.add(releases.indexOf(longFit[Math.floor(longRand() * longFit.length)]))
+      const jobs = [
+        ...[...picks].map((i) => ({ i, horizon: HORIZONS[Math.floor(rand() * HORIZONS.length)] })),
+        ...[...longPicks].map((i) => ({ i, horizon: LONG_HORIZONS[Math.floor(longRand() * LONG_HORIZONS.length)] })),
+      ]
+
+      for (const { i, horizon } of jobs) {
         const release = releases[i]
-        const horizon = HORIZONS[Math.floor(rand() * HORIZONS.length)]
         // Rozhodujeme na posledním zavření před reakcí trhu
         const decisionDate = release.afterClose ? release.date : daily.findLast((r) => r.date < release.date)?.date
         if (!decisionDate) continue
         const config = {
-          id: `auto-${ticker.toLowerCase()}-${release.date}`,
+          id: `auto-${ticker.toLowerCase()}-${release.date}${horizon.days > 120 ? '-' + horizon.days : ''}`,
           auto: true,
           ticker,
           sector,

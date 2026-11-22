@@ -6,7 +6,9 @@ const auto = loadAuto()
 import { validateScenario } from '../scripts/lib/validate.mjs'
 import { signals } from '../src/signals.js'
 
-const scenarios = [...stories, ...auto]
+import events from '../src/data/events.json'
+
+const scenarios = [...stories, ...auto, ...events]
 
 describe('data scénářů', () => {
   it.each(scenarios.map((s) => [s.id, s]))('%s prošel kontrolou kvality', (_, s) => {
@@ -45,7 +47,7 @@ describe('anonymní scénáře', () => {
   })
 
   it('pokrývají všechny horizonty a aspoň 8 odvětví', () => {
-    expect(new Set(auto.map((s) => s.horizon)).size).toBe(3)
+    expect(new Set(auto.map((s) => s.horizon)).size).toBe(6)
     expect(new Set(auto.map((s) => s.sector)).size).toBeGreaterThanOrEqual(8)
   })
 })
@@ -74,5 +76,30 @@ describe('rozdělení automatických scénářů', () => {
     expect(new Set(index.map((e) => e.id)).size).toBe(index.length)
     const ids = new Set(auto.map((s) => s.id))
     expect(index.every((e) => ids.has(e.id))).toBe(true)
+  })
+})
+
+describe('události', () => {
+  it('každá událost má aspoň 2 scénáře a budoucí časová osa je oddělená', () => {
+    const byEvent = Object.groupBy(events, (s) => s.event)
+    expect(Object.keys(byEvent).length).toBeGreaterThanOrEqual(15)
+    for (const list of Object.values(byEvent)) expect(list.length).toBeGreaterThanOrEqual(2)
+    for (const s of events) expect(s.events.some((e) => e.date > s.decisionDate)).toBe(true)
+  })
+
+  it('vysvětlení obsahuje skutečný pohyb akcie', () => {
+    for (const s of events) {
+      const future = s.series.filter(([d]) => d.slice(0, 10) > s.decisionDate)
+      const total = (future.at(-1)[1] / s.metrics.price - 1) * 100
+      const stated = Number(s.outcome.summary.match(/za celé období ([+-]?\d+) %/)[1])
+      // Tolerance 1 p.b. kvůli zaokrouhlení cen v datech
+      expect(Math.abs(stated - total)).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('dlouhé horizonty mají data až do konce', () => {
+    const long = loadAuto().filter((s) => s.horizon === '5 let')
+    expect(long.length).toBeGreaterThan(50)
+    for (const s of long) expect((Date.parse(s.series.at(-1)[0]) - Date.parse(s.decisionDate)) / 864e5).toBeGreaterThan(1800)
   })
 })

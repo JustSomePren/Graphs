@@ -5,6 +5,7 @@ import { scenarios } from '../scenarios/scenarios.mjs'
 import { buildScenario } from './lib/scenario.mjs'
 import { validateScenario } from './lib/validate.mjs'
 import { buildAuto } from './lib/auto.mjs'
+import { buildEvents } from './lib/events.mjs'
 
 // Automatické scénáře s chybou kontroly se vyřadí, ručně psané jen vypíšou varování
 async function writeChecked(file, list, dropInvalid = false) {
@@ -22,6 +23,8 @@ for (const s of scenarios) {
   out.push(await buildScenario(s))
 }
 await writeChecked('src/data/scenarios.json', out)
+
+if (process.argv.includes('--events') || process.argv.includes('--auto')) await writeChecked('src/data/events.json', await buildEvents(), true)
 
 // Automatické scénáře: po odvětvích do samostatných souborů + malý index, aplikace je načítá až když je potřebuje
 if (process.argv.includes('--auto')) {

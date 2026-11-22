@@ -1,3 +1,8 @@
+import '@fontsource/ibm-plex-sans/400.css'
+import '@fontsource/ibm-plex-sans/500.css'
+import '@fontsource/ibm-plex-sans/600.css'
+import '@fontsource/ibm-plex-mono/400.css'
+import '@fontsource/ibm-plex-mono/500.css'
 import './style.css'
 import stories from './data/scenarios.json'
 import { gameView, homeView, settingsView, statsView } from './views.js'
@@ -16,6 +21,35 @@ async function loadScenario(entry) {
   return loaded[key].find((s) => s.id === entry.id)
 }
 
+// Události: jeden soubor, seskupený podle události
+let eventScenarios
+const loadEvents = async () => (eventScenarios ??= (await import('./data/events.json')).default)
+async function eventGroups() {
+  const list = await loadEvents()
+  const groups = new Map()
+  for (const s of list) {
+    if (!groups.has(s.event)) groups.set(s.event, { id: s.event, title: s.title, categoryLabel: s.categoryLabel, date: s.eventDate ?? s.series.find(([d]) => d.slice(0, 10) > s.decisionDate)[0].slice(0, 10), tickers: [], items: [] })
+    const g = groups.get(s.event)
+    if (!g.tickers.includes(s.ticker)) g.tickers.push(s.ticker)
+    g.items.push(s)
+  }
+  return [...groups.values()].sort((a, b) => b.date.localeCompare(a.date))
+}
+
+async function startEvent(id, replace = false) {
+  homeMode = 1
+  const list = await loadEvents()
+  const s = list.find((x) => x.id === id)
+  // Další: náhodný jiný, dosud nehraný scénář z událostí
+  const next = () => {
+    const results = loadResults()
+    const fresh = list.filter((x) => !results[x.id] && x.id !== id)
+    const pick = (fresh.length ? fresh : list)[Math.floor(Math.random() * (fresh.length || list.length))]
+    startEvent(pick.id, true)
+  }
+  open(s, replace, next)
+}
+
 const app = document.getElementById('app')
 let homeMode = 0
 
@@ -30,6 +64,7 @@ const screens = {
       open: (s) => ((homeMode = 0), open(s)),
       quick,
       daily: { info: loadIndex().then((index) => dailyPick(index)), start: startDaily },
+      events: { list: eventGroups(), start: (id) => startEvent(id) },
       stats: () => go('stats'),
       settings: () => go('settings'),
       mode: homeMode,
@@ -53,7 +88,7 @@ function nextStory(s) {
 
 // Rychlá hra: náhodný anonymní scénář, přednostně dosud nehraný
 async function quick(horizon, replace = false) {
-  homeMode = 1
+  homeMode = 2
   const results = loadResults()
   const pool = (await loadIndex()).filter((e) => !horizon || e.horizon === horizon)
   const fresh = pool.filter((e) => !results[e.id])

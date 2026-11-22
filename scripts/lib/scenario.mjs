@@ -44,11 +44,17 @@ export async function buildScenario(s, { withInsiders = true, withPeers = true, 
   if (!px) throw new Error('chybí ceny ' + s.ticker)
   const daily = px.rows.filter((r) => r.date >= s.historyStart && r.date <= s.endDate)
 
-  // U krátkých scénářů jsou poslední 3 týdny a budoucnost po hodinách
+  // Zředění kvůli velikosti dat: starší historie a u dlouhých horizontů i vzdálenější budoucnost na každý 3. den
   const recent = isoDay(toTs(s.decisionDate) - 182 * DAY)
-  const thin = (rows) => (compact ? rows.filter((r, i) => r.date >= recent || i % 3 === 0) : rows)
+  const nearFuture = isoDay(toTs(s.decisionDate) + 45 * DAY)
+  const long = (toTs(s.endDate) - toTs(s.decisionDate)) / DAY > 120
+  const keep = (r, i) => (r.date >= recent && (!long || r.date <= nearFuture)) || i % 3 === 0 || r.date === s.decisionDate
+  const thin = (rows) => (compact ? rows.filter(keep) : rows)
   const precise = (x) => (compact ? Number(x.toPrecision(5)) : x)
   let series = thin(daily).map((r) => [r.date, precise(r.close)])
+  // S&P 500 pro srovnání v grafu (stejné body jako akcie)
+  const index = new Map((await prices('^GSPC', s.historyStart, s.endDate)).rows.map((r) => [r.date, r.close]))
+  const marketSeries = series.filter(([d]) => index.has(d)).map(([d]) => [d, Number(index.get(d).toPrecision(5))])
   if (s.intraday) {
     const from = isoDay(toTs(s.decisionDate) - 21 * DAY)
     const bars = await hourly(s.ticker, from, s.endDate, s.decisionDate)
@@ -74,6 +80,8 @@ export async function buildScenario(s, { withInsiders = true, withPeers = true, 
     ...s,
     peers: undefined,
     series,
+    sampled: compact && long ? true : undefined,
+    market: marketSeries,
     metrics,
     peerMetrics: peers.map(({ quarterly, cik, ...rest }) => rest),
     earnings,

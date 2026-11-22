@@ -13,7 +13,8 @@ export function validateScenario(s) {
     if (i === 0) return
     const [prevDate, prevPrice] = s.series[i - 1]
     if (date <= prevDate) fail(`data nejsou seřazená (${date})`)
-    if ((toTs(date) - toTs(prevDate)) / DAY > 7) fail(`díra v cenách ${prevDate} → ${date}`)
+    // Zředěné řady (každý 3. den) mají přirozeně delší mezery
+    if ((toTs(date) - toTs(prevDate)) / DAY > (s.sampled || i < 2 ? 10 : 7)) fail(`díra v cenách ${prevDate} → ${date}`)
     // Pohyb přes 3× za den skoro vždy znamená špatně přepočtený split
     if (Math.abs(Math.log(price / prevPrice)) > Math.log(3)) fail(`podezřelý skok ceny ${date}`)
   })

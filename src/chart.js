@@ -12,9 +12,12 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
   const css = getComputedStyle(document.documentElement)
   const color = (name) => css.getPropertyValue(name).trim()
 
-  const future = layout === 'full' ? 1 : 0.72
+  // Výchozí pohled: jen historie přes celou šířku. Při malování se okno přesune na budoucnost.
+  const future = 1
   const worldEnd = 1 + future
-  let view = layout === 'full' ? { x0: 0, x1: 1 } : { x0: 0, x1: worldEnd }
+  let view = { x0: 0, x1: 1 }
+  let layers = { market: false, ma50: false, ma200: false, guides: true }
+  let animation = null
 
   let mode = 'view'
   let zoom = defaultZoom(model)
@@ -87,6 +90,8 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     ctx.setLineDash([])
 
     drawBand()
+    drawGuides()
+    drawLayers()
     line(model.history.map((r) => [xOf(r.ts), y(r.price)]), color('--text'), 1.6)
 
     if (revealed) {
@@ -133,7 +138,7 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
   }
 
   function drawAxis() {
-    ctx.font = '11px system-ui'
+    ctx.font = "11px 'IBM Plex Mono', monospace"
     ctx.textAlign = 'left'
     ctx.fillStyle = color('--muted')
     for (const price of gridPrices()) {
@@ -144,12 +149,12 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     const p0y = y(model.p0)
     if (p0y > top() && p0y < bottom()) {
       ctx.fillStyle = color('--text')
-      ctx.font = '600 11px system-ui'
+      ctx.font = "500 11px 'IBM Plex Mono', monospace"
       ctx.fillText(fmtPrice(model.p0), right() + 5, p0y + 4)
     }
 
     // Data pod grafem: začátek okna, dnešek (pokud je vidět) a konec okna
-    ctx.font = '11px system-ui'
+    ctx.font = "11px 'IBM Plex Mono', monospace"
     ctx.fillStyle = color('--muted')
     const dateAt = (w) => {
       if (w <= 1) return model.history[Math.round(clamp(w, 0, 1) * (model.history.length - 1))].date
@@ -167,7 +172,7 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     if (showToday) at(fmtDate(model.s.decisionDate), sx, 'center')
     if (!showToday || right() - sx > 110) at(fmtDate(dateAt(Math.min(worldEnd, view.x1)).slice(0, 10)), right(), 'right')
     if (sx > left() && sx < right()) {
-      ctx.font = '600 11px system-ui'
+      ctx.font = "500 11px 'IBM Plex Mono', monospace"
       ctx.textAlign = 'center'
       ctx.fillText('DNES', sx, top() - 8)
     }
@@ -184,6 +189,57 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     ctx.fillRect(left() + (1 / worldEnd) * w, yy - 1, (future / worldEnd) * w, 5)
     ctx.fillStyle = color('--accent')
     ctx.fillRect(left() + (Math.max(0, view.x0) / worldEnd) * w, yy, ((Math.min(worldEnd, view.x1) - Math.max(0, view.x0)) / worldEnd) * w, 3)
+  }
+
+  // Klouzavý průměr za N obchodních dní (časovým oknem – funguje i u zředěných řad), spočítá se jednou
+  const averages = {}
+  function movingAverage(n) {
+    if (averages[n]) return averages[n]
+    const span = n * 1.45 * 86400000
+    const rows = model.history
+    averages[n] = rows
+      .map((r, i) => {
+        if (r.ts - rows[0].ts < span) return null
+        let sum = 0
+        let count = 0
+        for (let j = i; j >= 0 && r.ts - rows[j].ts <= span; j--) {
+          sum += rows[j].price
+          count++
+        }
+        return { ts: r.ts, price: sum / count }
+      })
+      .filter(Boolean)
+    return averages[n]
+  }
+
+  function drawLayers() {
+    if (layers.market && model.market.length) {
+      const visible = revealed ? model.market : model.market.filter((r) => r.ts <= model.now)
+      ctx.setLineDash([5, 3])
+      line(visible.map((r) => [xOf(r.ts), y(r.price)]), color('--index'), 1.4)
+      ctx.setLineDash([])
+    }
+    for (const [n, key, c] of [[50, 'ma50', '--ma1'], [200, 'ma200', '--ma2']]) {
+      if (layers[key]) line(movingAverage(n).map((r) => [xOf(r.ts), y(r.price)]), color(c), 1.3)
+    }
+  }
+
+  // Procentní vodítka v zóně budoucnosti: pomáhají kreslit konkrétní pohyb
+  function drawGuides() {
+    if (!layers.guides || (mode !== 'finger' && mode !== 'points')) return
+    const span = yr.b - yr.a
+    const steps = span > 1.6 ? [-0.5, 0.5, 1, 2] : span > 0.8 ? [-0.3, -0.2, 0.2, 0.3, 0.5] : [-0.2, -0.1, 0.1, 0.2]
+    ctx.font = "10px 'IBM Plex Mono', monospace"
+    ctx.textAlign = 'left'
+    for (const step of [0, ...steps]) {
+      const py = yR(Math.log(1 + step))
+      if (py < top() || py > bottom() - RESERVED) continue
+      ctx.setLineDash(step === 0 ? [] : [2, 4])
+      line([[splitX(), py], [right(), py]], color(step === 0 ? '--muted' : '--grid-strong'), step === 0 ? 0.8 : 1)
+      ctx.setLineDash([])
+      ctx.fillStyle = color('--muted')
+      ctx.fillText(step === 0 ? '0 %' : `${step > 0 ? '+' : ''}${Math.round(step * 100)} %`, splitX() + 6, py - 3)
+    }
   }
 
   // Kužel ±1σ: kam se cena při běžné volatilitě dostane zhruba ve 2 ze 3 případů
@@ -240,7 +296,7 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
   }
 
   function drawMarkers() {
-    ctx.font = '700 9px system-ui'
+    ctx.font = "600 9px 'IBM Plex Sans', system-ui"
     ctx.textAlign = 'center'
     for (const m of markers()) {
       const hiddenFuture = m.future && !revealed
@@ -264,7 +320,7 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
   }
 
   function label(text, x, ly) {
-    ctx.font = '600 12px system-ui'
+    ctx.font = "500 12px 'IBM Plex Sans', system-ui"
     const lines = text.split('\n')
     const w = Math.min(width - 4, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 14)
     const h = 8 + lines.length * 16
@@ -366,12 +422,12 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
       }
       return startGesture()
     }
-    if (mode === 'pan') {
-      gesture = { last: [x, py] }
+    const canDraw = !revealed && (mode === 'finger' || mode === 'points') && worldOfX(x) > 1 - 0.02
+    // Mimo kreslení jeden prst posouvá graf, krátké klepnutí ukáže hodnotu
+    if (!canDraw) {
+      gesture = { last: [x, py], start: [x, py], moved: false }
       return
     }
-    const canDraw = !revealed && (mode === 'finger' || mode === 'points') && worldOfX(x) > 1 - 0.02
-    if (!canDraw) return showTooltip(x, py)
     tooltip = null
     undoStack.push(points.map((p) => ({ ...p })))
     if (mode === 'finger') {
@@ -408,8 +464,12 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
       return render()
     }
     if (gesture?.last) {
-      panBy(x - gesture.last[0], py - gesture.last[1])
+      if (Math.hypot(x - gesture.start[0], py - gesture.start[1]) > 6) gesture.moved = true
+      if (!gesture.moved) return
+      // Na výšku jen vodorovně – svislý pohyb zůstává stránce na rolování
+      panBy(x - gesture.last[0], layout === 'full' ? py - gesture.last[1] : 0)
       gesture.last = [x, py]
+      tooltip = null
       return render()
     }
     if (drawing) {
@@ -420,14 +480,13 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
       const lo = (points[dragIndex - 1]?.t ?? 0) + 0.005
       const hi = (points[dragIndex + 1]?.t ?? 1.005) - 0.005
       points[dragIndex] = { t: clamp(tOfX(x), lo, Math.min(1, hi)), r: rOfY(py) }
-    } else if (mode === 'view' || revealed) {
-      return showTooltip(x, py)
     } else return
     render()
   }
 
   function onUp(e) {
     pointers.delete(e.pointerId)
+    if (gesture?.last && !gesture.moved && e.type === 'pointerup') showTooltip(...gesture.start)
     if (pointers.size < 2) gesture = null
     if (!drawing && dragIndex == null) return
     drawing = false
@@ -441,6 +500,24 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     if (t <= 0) return
     points = points.filter((p) => p.t < t)
     points.push({ t, r: rOfY(py) })
+  }
+
+  // Celá budoucnost + kousek historie, aby byl vidět bod „dnes“, odkud se kreslí
+  const futureView = () => ({ x0: 1 - future * 0.14, x1: worldEnd + future * 0.03 })
+
+  // Plynulý přesun okna
+  function animateTo(target) {
+    cancelAnimationFrame(animation)
+    const from = { ...view }
+    const started = performance.now()
+    const step = (now) => {
+      const k = Math.min(1, (now - started) / 420)
+      const e = 1 - (1 - k) ** 3
+      view = { x0: from.x0 + (target.x0 - from.x0) * e, x1: from.x1 + (target.x1 - from.x1) * e }
+      render()
+      if (k < 1) animation = requestAnimationFrame(step)
+    }
+    animation = requestAnimationFrame(step)
   }
 
   function onWheel(e) {
@@ -487,8 +564,18 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     },
     setMode(m) {
       mode = m
-      canvas.style.touchAction = m === 'view' && layout === 'inline' ? 'pan-y' : 'none'
+      const drawingMode = m === 'finger' || m === 'points'
+      canvas.style.touchAction = !drawingMode && layout === 'inline' ? 'pan-y' : 'none'
+      // Při malování se okno přesune na budoucnost s kouskem historie
+      if (drawingMode && !revealed && view.x1 < 1 + future * 0.6) animateTo(futureView())
+      else render()
+    },
+    setLayers(patch) {
+      layers = { ...layers, ...patch }
       render()
+    },
+    get layers() {
+      return layers
     },
     setZoom(z) {
       zoom = z
@@ -501,15 +588,14 @@ export function createChart(canvas, model, { onChange = () => {}, layout = 'inli
     },
     // Posun okna: do budoucnosti (na kreslení) nebo na celou osu
     showFuture() {
-      // Celá budoucnost + kousek historie, aby byl vidět bod „dnes“, odkud se kreslí
-      const x0 = 1 - future * 0.1
-      view = { x0, x1: worldEnd + future * 0.04 }
-      render()
+      animateTo(futureView())
+    },
+    showHistory() {
+      animateTo({ x0: 0, x1: 1 })
     },
     showAll() {
-      view = { x0: 0, x1: worldEnd }
       yr = baseRange()
-      render()
+      animateTo({ x0: 0, x1: worldEnd })
     },
     undo() {
       if (undoStack.length) points = undoStack.pop()

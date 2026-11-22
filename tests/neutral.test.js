@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import stories from '../src/data/scenarios.json'
 import { signals } from '../src/signals.js'
 import { loadAuto } from './helpers.js'
+import events from '../src/data/events.json'
 
 // Slova, která hodnotí nebo napovídají vývoj – před odhadem se nesmí objevit
 const BANNED = [
@@ -19,6 +20,11 @@ const offending = (text) => BANNED.filter((re) => re.test(text)).map((re) => tex
 describe('neutrální texty před odhadem', () => {
   it.each(stories.map((s) => [s.id, s]))('%s', (_, s) => {
     expect(offending(beforeGuess(s))).toEqual([])
+  })
+
+  it('události: situace, titulky, články a minulá časová osa', () => {
+    const bad = events.filter((s) => offending(beforeGuess(s)).length).map((s) => `${s.id}: ${offending(beforeGuess(s))}`)
+    expect(bad).toEqual([])
   })
 
   it('automatické scénáře mají neutrální situaci a titulek', () => {

@@ -19,14 +19,17 @@ Postup:
 1. Projdi záložky **Přehled** (situace + signály), **Data** (včetně tabulky minulých výsledků a reakcí trhu),
    **Konkurence** a **Články** (texty + výňatky a výhled vedení z originální tiskové zprávy).
    Klepnutím na „E“ v grafu uvidíš tržby, P/E a reakci akcie u každých minulých výsledků.
-2. Do modré zóny vpravo nakresli vývoj – **Prst** nebo **Body**. Tlačítko **↕** mění rozsah osy.
+2. Do modré zóny vpravo nakresli vývoj – **Prst** nebo **Body**. Tlačítko **⛶** otevře kreslení na celou obrazovku
+   na šířku: historie vyplní displej, **Budoucnost ▶** posune graf do zóny pro odhad. Dvěma prsty (nebo v režimu **✋ Posun**)
+   se graf posouvá a přibližuje; když při kreslení dojedeš k horní/dolní hraně, rozsah se sám rozšíří (max. 30×).
+   Na šířku se celá hra rozloží do dvou sloupců (graf + analýza).
 3. **Vyhodnotit** – skóre 0–100 (konečná cena 60, průběh 25, směr 15) + bonus až 15 za tvar
    (reakce na výsledky, obraty). Skóre je kalibrované: hádání bez informace dává průměrně ~35 bodů,
    správný směr ~65, správná konečná cena ~97 (hlídá to test `tests/calibration.test.js`).
 4. Profil: hodnost podle průměru posledních 10 her, série dní, odznaky a historie her.
 
-Další funkce: **Přehled** s 8 klíčovými čísly, ročním rozpětím a desítkou signálů po oblastech (valuace vs. konkurence
-i vlastní historie, zrychlení růstu, trend marží, dividendy a odkupy, typická reakce na výsledky, makro);
+Další funkce: **Přehled** s 8 klíčovými čísly, ročním rozpětím a „fakty v kostce“ po oblastech – jen čísla a srovnání,
+bez hodnocení (žádné „levná“, „riziko“, žádné zelené/červené zvýraznění před odhadem);
 tlačítko **±** ukáže pásmo běžného pohybu podle volatility; po vyhodnocení **sdílení** výsledku s emoji grafem
 a srovnání s „rovnou čárou“; **Statistiky** (trefený směr, sklon k optimismu/pesimismu, výsledky podle horizontu a odvětví);
 **Nastavení** (motiv, vibrace, reset postupu).
@@ -37,6 +40,12 @@ a srovnání s „rovnou čárou“; **Statistiky** (trefený směr, sklon k opt
 npm install
 npm run dev        # webová verze na http://localhost:5173 (i z mobilu ve stejné síti)
 ```
+
+## Neutralita
+
+Před odhadem hráč vidí jen to, co bylo známé k datu rozhodnutí, a v neutrálním tónu: titulky jsou ve tvaru
+„firma + událost + datum“, texty bez hodnotících slov. Hlídá to test `tests/neutral.test.js` (seznam zakázaných
+slov a kontrola, že budoucí události nejsou vidět).
 
 ## Testy
 

@@ -4,6 +4,7 @@ import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
 import { Share } from '@capacitor/share'
+import { ScreenOrientation } from '@capacitor/screen-orientation'
 import { loadSettings } from './storage.js'
 
 const native = Capacitor.isNativePlatform()
@@ -45,4 +46,21 @@ export function setupStatusBar() {
   apply()
   dark.addEventListener('change', apply)
   window.addEventListener('themechange', apply)
+}
+
+// Kreslení na celou obrazovku: na telefonu zamkne orientaci na šířku
+export async function enterLandscape(element) {
+  try {
+    if (native) return await ScreenOrientation.lock({ orientation: 'landscape' })
+    await element.requestFullscreen?.()
+    await screen.orientation?.lock?.('landscape')
+  } catch {}
+}
+
+export async function exitLandscape() {
+  try {
+    if (native) return await ScreenOrientation.unlock()
+    screen.orientation?.unlock?.()
+    if (document.fullscreenElement) await document.exitFullscreen()
+  } catch {}
 }

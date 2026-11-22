@@ -569,7 +569,7 @@ small,
   background: var(--card);
   border-radius: 12px;
   padding: 10px 12px 10px 14px;
-  border-left: 4px solid var(--muted);
+  border-left: 4px solid var(--grid);
   font-size: 14px;
 }
 
@@ -976,8 +976,7 @@ table.peers {
   position: relative;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(to right, var(--down), var(--warn), var(--up));
-  opacity: 0.8;
+  background: var(--card-2);
 }
 
 .range-track i {
@@ -1119,4 +1118,185 @@ main > .card + .card {
 
 .tip .link {
   flex: none;
+}
+
+/* --- v1.3: větší graf, celá obrazovka, rozvržení na šířku --- */
+
+.toolbar-wrap {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.toolbar-wrap .toolbar {
+  margin-top: 0;
+}
+
+.toolbar-wrap .toolbar:last-child .icon-btn {
+  flex: 1;
+}
+
+.icon-btn.accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 20px;
+}
+
+.no-scroll {
+  overflow: hidden;
+}
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--bg);
+  display: flex;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.fs-chart {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.chart-full {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.fs-hint {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+
+.fs-hint.fade {
+  opacity: 0;
+}
+
+.fs-side {
+  width: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 10px 0;
+  overflow-y: auto;
+}
+
+.segmented.vertical {
+  flex-direction: column;
+}
+
+.segmented.vertical button {
+  font-size: 20px;
+  padding: 8px;
+}
+
+.primary.small {
+  padding: 12px 8px;
+  font-size: 15px;
+  margin-top: auto;
+}
+
+/* Když se orientace nezamkne (např. v prohlížeči), nástroje jdou pod graf */
+@media (orientation: portrait) {
+  .fullscreen {
+    flex-direction: column;
+  }
+
+  .fs-side {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 10px calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .fs-side .segmented.vertical {
+    flex-direction: row;
+  }
+
+  .primary.small {
+    margin-top: 0;
+    flex: 1;
+  }
+}
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .screen {
+    max-width: 1100px;
+  }
+
+  .list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .game {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    column-gap: 16px;
+    align-items: start;
+  }
+
+  .game > * {
+    grid-column: 1;
+  }
+
+  .game > .topbar {
+    grid-column: 1 / -1;
+  }
+
+  .game > .analysis,
+  .game > div:has(> .result) {
+    grid-column: 2;
+    grid-row: 2 / span 6;
+    margin-top: 0;
+  }
+
+  .game {
+    padding-bottom: 16px;
+  }
+
+  .game .chart {
+    height: calc(100vh - 150px);
+    min-height: 200px;
+  }
+
+  .game .toolbar-wrap {
+    grid-template-columns: 1fr auto;
+  }
+
+  .game .toolbar-wrap .toolbar:last-child .icon-btn {
+    flex: none;
+  }
+
+  .game .action-bar {
+    position: static;
+    padding: 10px 0 0;
+    background: none;
+    grid-column: 1;
+  }
+
+  .game .tip {
+    display: none;
+  }
+}
+
+.label-btn {
+  font-size: 14px !important;
+  height: auto;
+  padding: 10px 6px;
+  line-height: 1.2;
 }

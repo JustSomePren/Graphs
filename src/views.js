@@ -2,9 +2,9 @@ import { DAY, el, fmtBig, fmtDate, fmtMonth, fmtNum, fmtPct, fmtPp, fmtPrice, fm
 import { buildModel } from './model.js'
 import { createChart, ZOOMS } from './chart.js'
 import { scorePrediction } from './score.js'
-import { balance, derived, signals } from './signals.js'
+import { derived, signals } from './signals.js'
 import { dailyDone, earnedBadges, getFlag, loadHistory, loadResults, loadSettings, rank, resetProgress, saveResult, saveSettings, setFlag, streak, BADGES } from './storage.js'
-import { applyTheme, share, success, tap } from './native.js'
+import { applyTheme, enterLandscape, exitLandscape, share, success, tap } from './native.js'
 import { playerStats, shareText } from './extras.js'
 
 const HORIZONS = [
@@ -192,15 +192,61 @@ export function gameView(s, { back, next }) {
     saveSettings({ band: on })
   }
 
+  const MODES = ['finger', 'points', 'pan']
   const toolbar = el(
     'div',
-    { class: 'toolbar' },
-    segmented(['✍️ Prst', '📍 Body'], 0, (i) => chart.setMode(i ? 'points' : 'finger')),
-    zoomButton,
-    extra.expectedMove ? bandButton : null,
-    el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => chart.undo() }, '↶'),
-    el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => chart.clear() }, '✕'),
+    { class: 'toolbar-wrap' },
+    el(
+      'div',
+      { class: 'toolbar' },
+      segmented(['✍️ Prst', '📍 Body', '✋ Posun'], 0, (i) => chart.setMode(MODES[i])),
+      el('button', { class: 'icon-btn accent', 'aria-label': 'Kreslit na celou obrazovku', onclick: () => openFullscreen() }, '⛶'),
+    ),
+    el(
+      'div',
+      { class: 'toolbar' },
+      zoomButton,
+      extra.expectedMove ? bandButton : null,
+      el('button', { class: 'icon-btn', 'aria-label': 'Celý graf', onclick: () => chart.showAll() }, '⟲'),
+      el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => chart.undo() }, '↶'),
+      el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => chart.clear() }, '✕'),
+    ),
   )
+
+  // Kreslení na celou obrazovku na šířku: historie přes celý displej, budoucnost posunem doprava
+  async function openFullscreen() {
+    const canvasFull = el('canvas', { class: 'chart-full', role: 'img', 'aria-label': chartDescription(s, model) })
+    const hint = el('p', { class: 'fs-hint' }, 'Kresli jedním prstem · posun a přiblížení dvěma prsty · u okraje se graf sám rozšíří')
+    let full
+    const close = async () => {
+      chart.setPoints(full.points)
+      refresh()
+      full.destroy()
+      overlay.remove()
+      document.body.classList.remove('no-scroll')
+      await exitLandscape()
+    }
+    const side = el(
+      'div',
+      { class: 'fs-side' },
+      segmented(['✍️', '📍', '✋'], 0, (i) => full.setMode(MODES[i]), 'segmented vertical'),
+      el('button', { class: 'icon-btn accent label-btn', 'aria-label': 'Posunout do budoucnosti', onclick: () => full.showFuture() }, 'Budoucnost ▶'),
+      el('button', { class: 'icon-btn', 'aria-label': 'Celý graf', onclick: () => full.showAll() }, '⟲'),
+      el('button', { class: 'icon-btn', 'aria-label': 'Vrátit krok', onclick: () => full.undo() }, '↶'),
+      el('button', { class: 'icon-btn', 'aria-label': 'Smazat odhad', onclick: () => full.clear() }, '✕'),
+      el('button', { class: 'primary small', onclick: close }, '✓ Hotovo'),
+    )
+    const overlay = el('div', { class: 'fullscreen', role: 'dialog', 'aria-label': 'Kreslení na celou obrazovku' }, el('div', { class: 'fs-chart' }, canvasFull, hint), side)
+    document.body.append(overlay)
+    document.body.classList.add('no-scroll')
+    await enterLandscape(overlay)
+    full = createChart(canvasFull, model, { layout: 'full', points: chart.points, onChange: (c) => (tap(), chart.setPoints(c.points), refresh()) })
+    full.setZoom(chart.zoom)
+    full.setPoints(chart.points)
+    full.setMode('finger')
+    if (bandButton.getAttribute('aria-pressed') === 'true') full.setBand(extra.expectedMove)
+    setTimeout(() => hint.classList.add('fade'), 4000)
+  }
 
   const legend = el('div', { class: 'legend' }, el('span', { class: 'key hist' }, 'Historie'), el('span', { class: 'key guess' }, 'Tvůj odhad'), model.intraday ? el('span', { class: 'pill' }, 'hodinová data') : null)
   const subtitle = el('small', {}, `${name} · odhad do ${fmtDate(model.future.at(-1).date.slice(0, 10))} · ${difficulty(s)}`)
@@ -229,6 +275,7 @@ export function gameView(s, { back, next }) {
     const score = scorePrediction(model, chart.points)
     const badges = saveResult(s, score)
     toolbar.remove()
+    screen.querySelector('.tip')?.remove()
     action.disabled = true
     chart.reveal(() => {
       state.revealed = true
@@ -314,7 +361,6 @@ function overviewPane(s, model) {
   const m = s.metrics
   const d = derived(s)
   const list = signals(s)
-  const sum = balance(list)
   const areas = [...new Set(list.map((x) => x.area))]
   return el(
     'div',
@@ -329,32 +375,23 @@ function overviewPane(s, model) {
       { class: 'tiles' },
       tile('Cena', fmtPrice(m.price), `kap. ${fmtBig(m.marketCap)}`),
       tile('P/E', pe(m), d.peerPe ? `konkurence ${fmtX(d.peerPe)}` : `P/S ${fmtX(m.ps)}`),
-      tile('Růst tržeb', fmtPct(m.lastQuarterGrowth), 'posl. kvartál r/r', m.lastQuarterGrowth),
-      tile('Provozní marže', fmtPct(m.operatingMargin, false), d.marginChange != null ? `${fmtPp(d.marginChange)} r/r` : '12 měsíců', d.marginChange),
-      tile('Za 6 měsíců', fmtPct(m.change6m), `za rok ${fmtPct(m.change1y)}`, m.change6m),
+      tile('Růst tržeb', fmtPct(m.lastQuarterGrowth), 'posl. kvartál r/r'),
+      tile('Provozní marže', fmtPct(m.operatingMargin, false), d.marginChange != null ? `${fmtPp(d.marginChange)} r/r` : '12 měsíců'),
+      tile('Za 6 měsíců', fmtPct(m.change6m), `za rok ${fmtPct(m.change1y)}`),
       tile('Běžný pohyb', d.expectedMove ? `±${fmtPct(d.expectedMove, false)}` : '–', `za ${s.horizon} (1σ)`),
       tile('Reakce na výsledky', d.typicalReaction ? `±${fmtPct(d.typicalReaction, false)}` : '–', 'průměr minulých'),
       tile('Volatilita', fmtPct(m.volatility, false), `beta ${num(m.beta)}`),
     ),
     rangeBar(m, d),
-    el('h4', {}, 'Signály'),
-    el(
-      'div',
-      { class: 'balance', role: 'img', 'aria-label': `${sum.good} pozitivních, ${sum.bad} negativních, ${sum.neutral} neutrálních signálů` },
-      el('i', { class: 'good', style: `flex:${sum.good}` }),
-      el('i', { class: 'neutral', style: `flex:${sum.neutral}` }),
-      el('i', { class: 'bad', style: `flex:${sum.bad}` }),
-    ),
-    el('p', { class: 'muted small' }, `${sum.good} pozitivních · ${sum.neutral} neutrálních · ${sum.bad} negativních`),
+    el('h4', {}, 'Fakta v kostce'),
     areas.map((area) =>
-      el('div', { class: 'signal-group' }, el('span', { class: 'area' }, area), el('ul', { class: 'signals' }, list.filter((x) => x.area === area).map((x) => el('li', { class: x.tone }, x.text)))),
+      el('div', { class: 'signal-group' }, el('span', { class: 'area' }, area), el('ul', { class: 'signals' }, list.filter((x) => x.area === area).map((x) => el('li', {}, x.text)))),
     ),
-    el('p', { class: 'muted small' }, 'Signály jsou automatické shrnutí dat, ne doporučení. Podrobnosti najdeš v záložce Data.'),
+    el('p', { class: 'muted small' }, 'Údaje známé k datu rozhodnutí, bez hodnocení. Podrobnosti najdeš v záložce Data.'),
   )
 }
 
-const tile = (label, value, hint, trend) =>
-  el('div', { class: 'tile' }, el('span', {}, label), el('b', { class: trend > 0 ? 'up' : trend < 0 ? 'down' : '' }, value), el('small', {}, hint))
+const tile = (label, value, hint) => el('div', { class: 'tile' }, el('span', {}, label), el('b', {}, value), el('small', {}, hint))
 
 // Kde je cena v rámci ročního rozpětí
 function rangeBar(m, d) {
@@ -417,7 +454,7 @@ function dataPane(s, model) {
       row('Počet akcií meziročně', fmtPct(m.sharesGrowth), '+ ředění, − odkupy'),
     ),
     section(
-      'Cena a riziko',
+      'Cena a volatilita',
       false,
       row('52týdenní max / min', `${fmtPrice(m.high52)} / ${fmtPrice(m.low52)}`, `od maxima ${fmtPct(m.fromHigh)}`),
       row('Změna 1 / 6 / 12 měsíců', `${fmtPct(m.change1m)} / ${fmtPct(m.change6m)} / ${fmtPct(m.change1y)}`),
@@ -451,10 +488,10 @@ function earningsSection(model) {
             'tr',
             {},
             cell(fmtDate(e.date)),
-            cell(fmtPct(e.snapshot?.growth), e.snapshot?.growth >= 0 ? 'up' : 'down'),
+            cell(fmtPct(e.snapshot?.growth)),
             cell(fmtPct(e.snapshot?.operatingMargin, false)),
             cell(e.snapshot?.pe ? fmtX(e.snapshot.pe) : '–'),
-            cell(fmtPct(e.reaction), e.reaction >= 0 ? 'up' : 'down'),
+            cell(fmtPct(e.reaction)),
           ),
         ),
       ),
@@ -473,7 +510,7 @@ function quartersChart(quarters) {
       el(
         'div',
         { class: 'qbar' },
-        el('em', { class: q.growth >= 0 ? 'up' : 'down' }, q.growth != null ? fmtPct(q.growth) : ''),
+        el('em', {}, q.growth != null ? fmtPct(q.growth) : ''),
         el('i', { style: `--h:${(q.revenue / max) * 100}%` }),
         el('small', {}, q.end.slice(2, 7).replace('-', '/')),
       ),
@@ -500,7 +537,7 @@ function macroSection(mc) {
     false,
     row('Úrok Fedu', rate(mc.fedFunds), before(mc.fedFunds)),
     row('Výnos 10letého dluhopisu', rate(mc.rate10y), before(mc.rate10y)),
-    row('Spread 10 let − 2 roky', rate(mc.spread10y2y), mc.spread10y2y.value < 0 ? 'inverzní křivka' : before(mc.spread10y2y)),
+    row('Spread 10 let − 2 roky', rate(mc.spread10y2y), before(mc.spread10y2y)),
     row('Inflace', rate(mc.inflation), `za ${fmtMonth(mc.inflation.asOf)}`),
     row('Nezaměstnanost', rate(mc.unemployment), before(mc.unemployment)),
   )
@@ -525,7 +562,7 @@ function peersPane(s) {
             'tr',
             { class: i === 0 ? 'me' : '' },
             cell(label(r, i)),
-            cell(fmtPct(r.change1y), r.change1y >= 0 ? 'up' : 'down'),
+            cell(fmtPct(r.change1y)),
             cell(r.ticker === '^GSPC' ? '–' : pe(r)),
             cell(fmtX(r.ps)),
             cell(fmtPct(r.revenueTtmGrowth)),
@@ -657,6 +694,6 @@ export function settingsView(back) {
     el('section', { class: 'card rows' }, toggle('Vibrace', 'při kreslení a vyhodnocení', 'haptics'), toggle('Pásmo běžného pohybu', 'zapnout ± v grafu automaticky', 'band')),
     el('h4', {}, 'Data'),
     el('section', { class: 'card' }, reset),
-    el('p', { class: 'foot' }, 'Kam to půjde? · verze 1.2 · data SEC EDGAR, FRED, Yahoo Finance'),
+    el('p', { class: 'foot' }, 'Kam to půjde? · verze 1.3 · data SEC EDGAR, FRED, Yahoo Finance'),
   )
 }

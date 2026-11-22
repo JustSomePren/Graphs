@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import stories from '../src/data/scenarios.json'
-import { balance, derived, signals } from '../src/signals.js'
+import { derived, signals } from '../src/signals.js'
 import { fmtPp, plural } from '../src/format.js'
 
 const story = (id) => stories.find((s) => s.id === id)
@@ -30,25 +30,25 @@ describe('odvozené ukazatele', () => {
   })
 })
 
-describe('signály', () => {
-  it('NVIDIA 2023: drahá, zásoby rostou rychleji než tržby', () => {
+describe('fakta v přehledu', () => {
+  it('NVIDIA 2023: P/E a meziroční růst zásob jako čísla', () => {
     const texts = signals(story('nvda-2023-05')).map((x) => x.text).join(' | ')
     expect(texts).toMatch(/P\/E 175/)
-    expect(texts).toMatch(/Zásoby rostou/)
+    expect(texts).toMatch(/Zásoby \+98 % r\/r/)
   })
 
-  it('Meta 2023: Fed zvedá sazby a inverzní křivka', () => {
-    const list = signals(story('meta-2023-02'))
-    expect(list.some((x) => x.area === 'Makro' && x.tone === 'bad')).toBe(true)
-    expect(list.some((x) => x.text.includes('Inverzní'))).toBe(true)
+  it('Meta 2023: makro jako čísla (sazby, spread, inflace)', () => {
+    const makro = signals(story('meta-2023-02')).filter((x) => x.area === 'Makro').map((x) => x.text)
+    expect(makro.some((t) => /Úrok Fedu .* → .* za 6 měsíců/.test(t))).toBe(true)
+    expect(makro.some((t) => /Spread 10 let − 2 roky -?−?\d/.test(t))).toBe(true)
+    expect(makro.some((t) => /Inflace \d/.test(t))).toBe(true)
   })
 
-  it('každý příběh má aspoň 8 signálů a bilance sedí', () => {
+  it('každý příběh má aspoň 12 faktů a žádné hodnocení', () => {
     for (const s of stories) {
       const list = signals(s)
-      expect(list.length).toBeGreaterThanOrEqual(8)
-      const b = balance(list)
-      expect(b.good + b.bad + b.neutral).toBe(list.length)
+      expect(list.length).toBeGreaterThanOrEqual(12)
+      expect(list.every((x) => Object.keys(x).join() === 'area,text')).toBe(true)
     }
   })
 })

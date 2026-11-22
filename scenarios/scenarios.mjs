@@ -5,7 +5,7 @@ export const scenarios = [
     id: 'nvda-2023-05',
     ticker: 'NVDA',
     name: 'NVIDIA',
-    title: 'NVIDIA před AI earnings',
+    title: 'NVIDIA před výsledky Q1 FY2024',
     horizon: 'měsíc',
     peers: ['AMD', 'INTC'],
     historyStart: '2021-11-01',
@@ -13,8 +13,8 @@ export const scenarios = [
     endDate: '2023-06-30',
     situation:
       'Je 24. května 2023 odpoledne. NVIDIA dnes po zavření burzy zveřejní výsledky za Q1 fiskálního roku 2024. ' +
-      'Od říjnového dna 2022 akcie vyrostla téměř trojnásobně – trh sází na to, že na jejích čipech poběží celý boom generativní AI. ' +
-      'Klasické tržby ale pořád klesají meziročně (herní segment po kryptu a covidu).',
+      'Od říjnového minima 2022 akcie vyrostla téměř trojnásobně. Po spuštění ChatGPT roste zájem o čipy pro generativní AI. ' +
+      'Celkové tržby za poslední ohlášený kvartál meziročně klesly (herní segment −46 %).',
     events: [
       { date: '2022-03-22', label: 'GTC: představen čip H100' },
       { date: '2022-08-31', label: 'USA omezují export A100/H100 do Číny' },
@@ -26,8 +26,8 @@ export const scenarios = [
       {
         title: 'Výsledky Q3 FY2023 (16. 11. 2022)',
         body:
-          'Tržby 5,93 mld. USD, meziročně −17 %. Herní segment −51 % – kanály jsou přeplněné grafikami po konci kryptotěžby. ' +
-          'Data center roste (+31 %), ale vedení přiznává dopad exportních omezení do Číny. Firma odepisuje zásoby.',
+          'Tržby 5,93 mld. USD, meziročně −17 %. Herní segment −51 %, vedení uvádí vysoké zásoby grafik v distribuci. ' +
+          'Data center +31 %, vedení uvádí dopad exportních omezení do Číny. Firma odepisuje zásoby.',
       },
       {
         title: 'Výsledky Q4 FY2023 (22. 2. 2023)',
@@ -38,14 +38,13 @@ export const scenarios = [
       {
         title: 'Co trh čeká',
         body:
-          'Podle médií analytici čekají tržby za Q1 kolem 6,5 mld. USD (v souladu s výhledem) a výhled na Q2 kolem 7,1–7,2 mld. USD. ' +
-          'Klíčová otázka: promítne se poptávka po H100 od Microsoftu, Googlu, Amazonu a Mety už do výhledu, nebo je to zatím jen příběh?',
+          'Podle médií analytici čekají tržby za Q1 kolem 6,5 mld. USD (v souladu s výhledem) a výhled na Q2 kolem 7,1–7,2 mld. USD.',
       },
       {
         title: 'Konkurence',
         body:
           'AMD chystá akcelerátor MI300 (představen na CES v lednu 2023, ostrý start až koncem roku). Intel má Gaudi. ' +
-          'Hyperscaleři vyvíjí vlastní čipy (Google TPU, AWS Trainium/Inferentia). Výhodou NVIDIE je softwarový ekosystém CUDA.',
+          'Hyperscaleři vyvíjí vlastní čipy (Google TPU, AWS Trainium/Inferentia). NVIDIA nabízí vlastní softwarovou platformu CUDA.',
       },
     ],
     outcome: {
@@ -63,7 +62,7 @@ export const scenarios = [
     id: 'meta-2022-02',
     ticker: 'META',
     name: 'Meta Platforms',
-    title: 'Meta a první pokles uživatelů',
+    title: 'Meta před výsledky Q4 2021',
     horizon: '2 měsíce',
     peers: ['GOOGL', 'SNAP', 'PINS'],
     historyStart: '2020-06-01',
@@ -82,18 +81,18 @@ export const scenarios = [
       {
         title: 'Výsledky Q3 2021 (25. 10. 2021)',
         body:
-          'Tržby 29,0 mld. USD (+35 %), ale pod očekáváním. Denně aktivní uživatelé (DAU) 1,93 mld. ' +
+          'Tržby 29,0 mld. USD (+35 %), podle médií mírně pod konsenzem analytiků. Denně aktivní uživatelé (DAU) 1,93 mld. ' +
           'Výhled na Q4: 31,5–34 mld. USD, vedení výslovně zmiňuje dopad změn v iOS. Reality Labs (VR/metaverse) se od Q4 vykazuje zvlášť a letos sníží provozní zisk zhruba o 10 mld. USD.',
       },
       {
         title: 'Apple ATT',
         body:
-          'Od iOS 14.5 musí aplikace žádat o souhlas se sledováním. Většina uživatelů odmítá. Měření účinnosti reklam se zhoršilo – malí inzerenti, kteří na Facebooku stojí, hůř vyhodnocují kampaně.',
+          'Od iOS 14.5 musí aplikace žádat o souhlas se sledováním. Podle průzkumů většina uživatelů sledování nepovolí. To omezuje měření účinnosti reklam.',
       },
       {
         title: 'Konkurence',
         body:
-          'TikTok v září 2021 oznámil 1 miliardu měsíčních uživatelů a bere pozornost hlavně mladým. Meta odpovídá formátem Reels, který se ale zatím monetizuje hůř než klasický feed.',
+          'TikTok v září 2021 oznámil 1 miliardu měsíčních uživatelů. Meta rozvíjí formát Reels; vedení uvedlo, že se zatím monetizuje méně než feed.',
       },
     ],
     outcome: {
@@ -111,19 +110,19 @@ export const scenarios = [
     id: 'meta-2023-02',
     ticker: 'META',
     name: 'Meta Platforms',
-    title: 'Meta: rok efektivity?',
+    title: 'Meta před výsledky Q4 2022',
     horizon: '3 měsíce',
     peers: ['GOOGL', 'SNAP'],
     historyStart: '2021-09-01',
     decisionDate: '2023-02-01',
     endDate: '2023-04-28',
     situation:
-      'Je 1. února 2023. Meta dnes po zavření zveřejní výsledky Q4 2022. Akcie spadla od maxima o víc než 70 %, ' +
-      'na podzim investoři trestali obří výdaje na metaverse. V listopadu firma propustila 11 000 lidí. Od dna se cena už výrazně odrazila.',
+      'Je 1. února 2023. Meta dnes po zavření zveřejní výsledky Q4 2022. Akcie je zhruba o 60 % pod maximem ze září 2021, v listopadu 2022 byla o více než 70 % níž. ' +
+      'Po výsledcích Q3 klesla o 24 %. V listopadu firma propustila 11 000 lidí.',
     events: [
-      { date: '2022-02-03', label: 'Pád −26 % po Q4 2021' },
+      { date: '2022-02-03', label: 'Výsledky Q4 2021, akcie −26 %' },
       { date: '2022-10-24', label: 'Otevřený dopis Altimeter: „škrtejte náklady“' },
-      { date: '2022-10-26', label: 'Q3 2022: výdaje ↑, akcie −24 %' },
+      { date: '2022-10-26', label: 'Výsledky Q3 2022, akcie −24 %' },
       { date: '2022-11-09', label: 'Propuštění 11 000 zaměstnanců' },
     ],
     articles: [
@@ -131,17 +130,17 @@ export const scenarios = [
         title: 'Výsledky Q3 2022 (26. 10. 2022)',
         body:
           'Tržby 27,7 mld. USD (−4 %), čistý zisk −52 %. Reality Labs ztráta 3,7 mld. za kvartál. ' +
-          'Vedení nastínilo náklady na rok 2023 ve výši 96–101 mld. USD a Zuckerberg trval na investicích do metaverse. Trh reagoval pádem o 24 %.',
+          'Vedení nastínilo náklady na rok 2023 ve výši 96–101 mld. USD a pokračující investice do Reality Labs. Akcie den poté −24 %.',
       },
       {
         title: 'Propouštění (9. 11. 2022)',
         body:
-          'Meta propouští ~13 % zaměstnanců. Zuckerberg přiznává, že přecenil trvalost covidového růstu online byznysu. První signál, že vedení slyší tlak investorů.',
+          'Meta propouští ~13 % zaměstnanců. Zuckerberg uvedl, že čekal trvalejší zrychlení online byznysu po covidu.',
       },
       {
         title: 'Konkurence a trh',
         body:
-          'Celý reklamní trh zpomaluje (Snap, Google i Amazon hlásí slabší reklamy). Reels rostou, TikTok stále sílí. Zvyšující se sazby Fedu tlačí na valuace růstových firem.',
+          'Snap, Alphabet i Amazon hlásily ve 3. čtvrtletí zpomalení reklamních tržeb. Fed v roce 2022 zvýšil sazby z nuly na 4,25–4,5 %.',
       },
     ],
     outcome: {
@@ -159,17 +158,17 @@ export const scenarios = [
     id: 'nflx-2022-04',
     ticker: 'NFLX',
     name: 'Netflix',
-    title: 'Netflix: kam se poděli předplatitelé?',
+    title: 'Netflix před výsledky Q1 2022',
     horizon: '2 měsíce',
     peers: ['DIS', 'CMCSA'],
     historyStart: '2020-06-01',
     decisionDate: '2022-04-19',
     endDate: '2022-06-30',
     situation:
-      'Je 19. dubna 2022. Netflix dnes po zavření zveřejní výsledky Q1. Už v lednu akcie spadla o 22 % kvůli slabému výhledu přírůstků předplatitelů. ' +
+      'Je 19. dubna 2022. Netflix dnes po zavření zveřejní výsledky Q1. V lednu akcie po výsledcích klesla o 22 %, výhled přírůstků předplatitelů byl pod očekáváním analytiků. ' +
       'Od té doby firma zdražila v USA a v březnu kvůli válce stáhla službu z Ruska.',
     events: [
-      { date: '2022-01-20', label: 'Q4 2021: slabý výhled, akcie −22 %' },
+      { date: '2022-01-20', label: 'Výsledky Q4 2021, akcie −22 %' },
       { date: '2022-01-14', label: 'Zdražení v USA a Kanadě' },
       { date: '2022-03-06', label: 'Netflix pozastavuje službu v Rusku' },
     ],
@@ -177,7 +176,7 @@ export const scenarios = [
       {
         title: 'Výsledky Q4 2021 (20. 1. 2022)',
         body:
-          'Přírůstek 8,3 mil. předplatitelů (celkem ~222 mil.), mírně pod výhledem. Na Q1 2022 ale vedení čeká jen 2,5 mil. nových předplatitelů (rok předtím 4 mil.). ' +
+          'Přírůstek 8,3 mil. předplatitelů (celkem ~222 mil.), mírně pod výhledem. Na Q1 2022 vedení čeká 2,5 mil. nových předplatitelů (rok předtím 4 mil.). ' +
           'Vysvětluje to slabší nabídkou obsahu v první polovině roku a konkurencí.',
       },
       {
@@ -187,7 +186,7 @@ export const scenarios = [
       {
         title: 'Konkurence',
         body:
-          'Disney+ roste velmi rychle (přes 129 mil. předplatitelů koncem roku 2021), HBO Max, Amazon Prime Video a Apple TV+ investují miliardy do obsahu. Po covidovém boomu se trh nasytil.',
+          'Disney+ roste velmi rychle (přes 129 mil. předplatitelů koncem roku 2021), HBO Max, Amazon Prime Video a Apple TV+ investují do obsahu.',
       },
     ],
     outcome: {
@@ -205,7 +204,7 @@ export const scenarios = [
     id: 'aapl-2019-01',
     ticker: 'AAPL',
     name: 'Apple',
-    title: 'Apple: varování z Číny',
+    title: 'Apple po snížení výhledu (leden 2019)',
     horizon: 'rok',
     peers: ['MSFT', 'GOOGL', 'AMZN'],
     historyStart: '2017-01-03',
@@ -213,28 +212,28 @@ export const scenarios = [
     endDate: '2019-12-31',
     situation:
       'Je večer 2. ledna 2019. Tim Cook právě rozeslal akcionářům dopis: Apple snižuje výhled tržeb za vánoční kvartál z 89–93 mld. USD na ~84 mld. USD. ' +
-      'Hlavní důvod: slabá Čína a obchodní válka USA–Čína. Akcie už od říjnového maxima spadla o třetinu a celý trh má za sebou nejhorší prosinec od roku 1931.',
+      'Jako hlavní důvod uvádí nižší poptávku v Číně v době obchodního sporu USA–Čína. Akcie je od říjnového maxima zhruba o třetinu níž, S&P 500 měl nejslabší prosinec od roku 1931.',
     events: [
       { date: '2018-08-02', label: 'Apple první firmou za 1 bil. USD' },
       { date: '2018-11-01', label: 'Q4 FY18: konec reportování prodaných kusů' },
-      { date: '2018-12-24', label: 'Dno výprodeje trhu' },
+      { date: '2018-12-24', label: 'S&P 500: nejnižší zavření roku 2018' },
     ],
     articles: [
       {
         title: 'Dopis Tima Cooka (2. 1. 2019)',
         body:
-          'Nový výhled ~84 mld. USD tržeb (dříve 89–93). Pokles je hlavně v Číně (iPhone, Mac, iPad), částečně i nižší počet upgradů iPhonů – lidé si nechávají telefony déle, levnější výměny baterií. ' +
+          'Nový výhled ~84 mld. USD tržeb (dříve 89–93). Pokles je hlavně v Číně (iPhone, Mac, iPad), částečně i nižší počet upgradů iPhonů – lidé si nechávají telefony déle, Apple v roce 2018 zlevnil výměny baterií. ' +
           'Služby, Wearables a Mac dle Cooka rostou rekordně; hrubá marže kolem 38 %.',
       },
       {
         title: 'Výsledky Q4 FY2018 (1. 11. 2018)',
         body:
-          'Tržby 62,9 mld. USD (+20 %), ale výhled na Vánoce pod očekáváním a oznámení, že firma přestane zveřejňovat počty prodaných iPhonů. Trh to četl jako signál, že prodeje kusů stagnují. Akcie −7 %.',
+          'Tržby 62,9 mld. USD (+20 %), výhled na vánoční kvartál pod očekáváním analytiků a oznámení, že firma přestane zveřejňovat počty prodaných iPhonů. Akcie −7 %.',
       },
       {
         title: 'Makro',
         body:
-          'Fed v prosinci zvedl sazby počtvrté v roce, obchodní válka eskaluje, S&P 500 v Q4 −14 %. Apple se obchoduje na P/E výrazně pod průměrem trhu.',
+          'Fed v prosinci zvedl sazby počtvrté v roce, S&P 500 v Q4 −14 %.',
       },
     ],
     outcome: {
@@ -252,7 +251,7 @@ export const scenarios = [
     id: 'tsla-2020-11',
     ticker: 'TSLA',
     name: 'Tesla',
-    title: 'Tesla jde do S&P 500',
+    title: 'Tesla po oznámení zařazení do S&P 500',
     horizon: '6 týdnů',
     peers: ['GM', 'F'],
     historyStart: '2019-06-03',
@@ -262,7 +261,7 @@ export const scenarios = [
       'Je večer 16. listopadu 2020. S&P Dow Jones Indices právě oznámila, že Tesla bude zařazena do indexu S&P 500 k 21. prosinci. ' +
       'Indexové fondy budou muset nakoupit akcie za desítky miliard dolarů. V září přitom komise Teslu nezařadila a akcie tehdy spadla o 21 %.',
     events: [
-      { date: '2020-01-29', label: 'Q4 2019: zisk, akcie letí' },
+      { date: '2020-01-29', label: 'Výsledky Q4 2019' },
       { date: '2020-08-31', label: 'Split akcií 5:1' },
       { date: '2020-09-08', label: 'Nezařazení do S&P 500, −21 %' },
       { date: '2020-09-22', label: 'Battery Day' },
@@ -277,13 +276,13 @@ export const scenarios = [
       {
         title: 'Zařazení do indexu',
         body:
-          'Tesla bude jedna z největších firem indexu a největší nově zařazená firma v historii. Index se mění k 21. 12. – fondy sledující S&P 500 nakupují typicky v den před účinností. ' +
+          'Tesla bude podle tržní hodnoty největší nově zařazená firma v historii indexu. Index se mění k 21. 12. – fondy sledující S&P 500 nakupují typicky v den před účinností. ' +
           'S&P zvažuje zařazení najednou nebo ve dvou tranších.',
       },
       {
         title: 'Valuace a konkurence',
         body:
-          'Tesla je dražší než Toyota, VW a GM dohromady, i když prodá zlomek aut. GM a Ford ohlašují elektrické plány, VW spouští ID.3 a čínský NIO roste.',
+          'Tržní hodnota Tesly přesahuje součet Toyoty, VW a GM; aut prodává výrazně méně. GM a Ford ohlašují elektrické plány, VW spouští ID.3 a čínský NIO roste.',
       },
     ],
     outcome: {
@@ -301,7 +300,7 @@ export const scenarios = [
     id: 'crwd-2024-07',
     ticker: 'CRWD',
     name: 'CrowdStrike',
-    title: 'CrowdStrike: výpadek, který shodil svět',
+    title: 'CrowdStrike po výpadku Windows (červenec 2024)',
     horizon: '6 týdnů',
     peers: ['PANW', 'S', 'FTNT'],
     historyStart: '2023-07-03',
@@ -319,7 +318,7 @@ export const scenarios = [
         title: 'Výsledky Q1 FY2025 (4. 6. 2024)',
         body:
           'Tržby 921 mil. USD (+33 %), roční opakované tržby (ARR) 3,65 mld. USD (+33 %). Firma zvýšila celoroční výhled zisku. ' +
-          'Akcie se obchoduje za více než 20násobek tržeb – trh za ni platí jako za nejlepší firmu v oboru.',
+          'Akcie se obchoduje za více než 20násobek tržeb.',
       },
       {
         title: 'Co se stalo',
@@ -330,7 +329,7 @@ export const scenarios = [
       {
         title: 'Konkurence',
         body:
-          'Hlavní konkurenti: Microsoft Defender, Palo Alto Networks, SentinelOne. Přechod velké firmy na jiný EDR je ale drahý a trvá měsíce až roky.',
+          'Hlavní konkurenti: Microsoft Defender, Palo Alto Networks, SentinelOne. Přechod velké firmy na jiný EDR obvykle trvá měsíce.',
       },
     ],
     outcome: {
@@ -348,15 +347,15 @@ export const scenarios = [
     id: 'zm-2020-10',
     ticker: 'ZM',
     name: 'Zoom Video',
-    title: 'Zoom na vrcholu pandemie',
+    title: 'Zoom v říjnu 2020',
     horizon: 'rok+',
     peers: ['MSFT', 'RNG'],
     historyStart: '2019-04-18',
     decisionDate: '2020-10-19',
     endDate: '2021-12-31',
     situation:
-      'Je 19. října 2020. Zoom se stal synonymem pro práci z domova – akcie letos vzrostla zhruba sedminásobně. ' +
-      'Druhá vlna covidu nabírá na síle, firmy i školy jedou dál online. Vakcíny jsou ve třetí fázi testů.',
+      'Je 19. října 2020. Zoom je široce používaný pro práci a výuku z domova, akcie letos vzrostla zhruba sedminásobně. ' +
+      'Počty nakažených covidem v USA a Evropě opět rostou. Několik vakcín je ve třetí fázi testů.',
     events: [
       { date: '2019-04-18', label: 'IPO' },
       { date: '2020-03-11', label: 'WHO vyhlašuje pandemii' },
@@ -372,12 +371,12 @@ export const scenarios = [
       {
         title: 'Konkurence',
         body:
-          'Microsoft Teams hlásí 115 mil. denně aktivních uživatelů a je zdarma v Office 365. Google Meet je zdarma pro všechny. Zoom vyhrává jednoduchostí, ale bariéra přechodu je nízká.',
+          'Microsoft Teams hlásí 115 mil. denně aktivních uživatelů a je zdarma v Office 365. Google Meet je zdarma pro všechny. Přechod mezi videokonferenčními službami je pro uživatele technicky snadný.',
       },
       {
         title: 'Valuace',
         body:
-          'Trh oceňuje Zoom výš než mnohé zavedené softwarové firmy dohromady. Cena předpokládá, že vysoký růst vydrží i po pandemii.',
+          'Tržní hodnota přes 160 mld. USD při výhledu ročních tržeb 2,37–2,39 mld. USD.',
       },
     ],
     outcome: {
@@ -395,15 +394,15 @@ export const scenarios = [
     id: 'gme-2021-01',
     ticker: 'GME',
     name: 'GameStop',
-    title: 'GameStop a WallStreetBets',
+    title: 'GameStop v lednu 2021',
     horizon: 'dny',
     peers: ['BBY'],
     historyStart: '2020-01-02',
     decisionDate: '2021-01-22',
     endDate: '2021-02-10',
     situation:
-      'Je pátek 22. ledna 2021 večer. Akcie upadajícího prodejce her GameStop letos vystřelila z ~19 na 65 USD. ' +
-      'Na Redditu (r/wallstreetbets) se lidé domlouvají na nákupu a call opcích – short interest přesahuje 100 % volných akcií. Hedge fondy sázejí na pád.',
+      'Je pátek 22. ledna 2021 večer. Akcie prodejce her GameStop letos vzrostla z ~19 na 65 USD. ' +
+      'Na Redditu (r/wallstreetbets) se o akcii a call opcích hodně diskutuje. Akcií prodaných nakrátko (short interest) je podle dostupných údajů víc než 100 % volně obchodovaných akcií.',
     events: [
       { date: '2020-08-31', label: 'Ryan Cohen odhaluje podíl' },
       { date: '2021-01-11', label: 'Cohen + 2 lidé do představenstva' },
@@ -420,10 +419,10 @@ export const scenarios = [
         title: 'Short squeeze',
         body:
           'Když je shortováno víc akcií, než je volně k dispozici, musí shorteři při růstu ceny nakupovat zpět – a tím cenu dál tlačí nahoru. ' +
-          'Gamma squeeze: prodejci call opcí se zajišťují nákupem akcií. Fundamentálně je GameStop ztrátový.',
+          'Gamma squeeze: prodejci call opcí se zajišťují nákupem akcií. GameStop byl za poslední 4 kvartály ve ztrátě.',
       },
       {
-        title: 'Rizika',
+        title: 'Možné zásahy',
         body:
           'Brokeři mohou omezit obchodování, zvýšit maržové požadavky, shorteři mohou dokoupit kapitál. Pohyby desítek procent za den v obou směrech.',
       },
@@ -443,7 +442,7 @@ export const scenarios = [
     id: 'pton-2021-11',
     ticker: 'PTON',
     name: 'Peloton',
-    title: 'Peloton po pandemickém boomu',
+    title: 'Peloton před výsledky Q1 FY2022',
     horizon: '2 měsíce',
     peers: ['LULU', 'NKE'],
     historyStart: '2019-09-26',
@@ -451,9 +450,9 @@ export const scenarios = [
     endDate: '2021-12-31',
     situation:
       'Je 4. listopadu 2021. Peloton dnes po zavření zveřejní výsledky za Q1 fiskálního roku 2022. ' +
-      'Posilovny jsou znovu otevřené, firma v srpnu zlevnila základní kolo a akcie je už zhruba o polovinu pod lednovým maximem.',
+      'Posilovny jsou znovu otevřené, firma v srpnu zlevnila základní kolo. Akcie je zhruba o polovinu pod lednovým maximem.',
     events: [
-      { date: '2020-03-16', label: 'Lockdowny, boom domácího cvičení' },
+      { date: '2020-03-16', label: 'Lockdowny v USA' },
       { date: '2021-05-05', label: 'Stažení běžeckého pásu Tread+' },
       { date: '2021-08-26', label: 'Zlevnění Bike na 1 495 USD' },
     ],
@@ -461,18 +460,18 @@ export const scenarios = [
       {
         title: 'Výsledky Q4 FY2021 (26. 8. 2021)',
         body:
-          'Tržby 937 mil. USD, čistá ztráta 313 mil. USD (ztráta se prohlubuje). Firma snížila cenu základního kola z 1 895 na 1 495 USD, aby oživila poptávku. ' +
-          'Výhled na první kvartál nového roku byl slabší, než trh čekal.',
+          'Tržby 937 mil. USD, čistá ztráta 313 mil. USD. Firma snížila cenu základního kola z 1 895 na 1 495 USD. ' +
+          'Výhled na první kvartál nového roku byl pod očekáváním analytiků.',
       },
       {
         title: 'Stažení Tread+ (5. 5. 2021)',
         body:
-          'Po úrazech dětí a smrtelné nehodě Peloton stáhl pás Tread+ a ohlásil miliardové škody na pověsti i tržbách. Vedení nejdřív varování úřadu CPSC odmítalo.',
+          'Po úrazech dětí a smrtelné nehodě Peloton stáhl pás Tread+. Vedení nejdřív varování úřadu CPSC odmítalo.',
       },
       {
         title: 'Konkurence',
         body:
-          'Apple Fitness+ (od prosince 2020), iFIT/NordicTrack, Lululemon koupil Mirror. Hlavní „konkurent“ jsou ale znovu otevřené posilovny a návrat lidí ven.',
+          'Apple Fitness+ (od prosince 2020), iFIT/NordicTrack, Lululemon koupil Mirror. Posilovny jsou znovu otevřené.',
       },
     ],
     outcome: {
@@ -490,7 +489,7 @@ export const scenarios = [
     id: 'intc-2024-08',
     ticker: 'INTC',
     name: 'Intel',
-    title: 'Intel: obrat, nebo pád?',
+    title: 'Intel před výsledky Q2 2024',
     horizon: '2 měsíce',
     peers: ['AMD', 'NVDA', 'QCOM'],
     historyStart: '2023-06-01',
@@ -502,23 +501,23 @@ export const scenarios = [
     events: [
       { date: '2024-03-20', label: 'Dotace z CHIPS Act až 8,5 mld. USD' },
       { date: '2024-04-02', label: 'Foundry: ztráta 7 mld. USD za 2023' },
-      { date: '2024-04-25', label: 'Q1: slabý výhled, akcie −9 %' },
+      { date: '2024-04-25', label: 'Výsledky Q1 2024, akcie −9 %' },
     ],
     articles: [
       {
         title: 'Výsledky Q1 2024 (25. 4. 2024)',
         body:
-          'Tržby 12,7 mld. USD (+9 %), ale výhled na Q2 jen 12,5–13,5 mld. USD, pod očekáváním trhu. Vedení zmiňuje omezené výrobní kapacity a slabší poptávku mimo AI. Akcie den poté −9 %.',
+          'Tržby 12,7 mld. USD (+9 %), výhled na Q2 12,5–13,5 mld. USD, pod očekáváním analytiků. Vedení zmiňuje omezené výrobní kapacity. Akcie den poté −9 %.',
       },
       {
         title: 'Strategie IDM 2.0',
         body:
-          'Intel chce vyrábět čipy i pro jiné firmy (foundry) a do roku 2025 dohnat TSMC technologií 18A. To znamená obří kapitálové výdaje, tlak na hrubou marži a hotovost. Dividenda zatím zůstává.',
+          'Intel chce vyrábět čipy i pro jiné firmy (foundry) a do roku 2025 dohnat TSMC technologií 18A. Plán vyžaduje vysoké kapitálové výdaje. Firma vyplácí dividendu.',
       },
       {
         title: 'Konkurence',
         body:
-          'AMD bere Intelu podíl v serverech, NVIDIA ovládla AI akcelerátory, kde Intel s Gaudi téměř nehraje. V noteboocích přichází čipy Qualcomm Snapdragon X na architektuře Arm.',
+          'AMD v posledních letech zvyšuje podíl v serverových procesorech, v AI akcelerátorech má největší podíl NVIDIA (Intel nabízí Gaudi). V noteboocích přichází čipy Qualcomm Snapdragon X na architektuře Arm.',
       },
     ],
     outcome: {
@@ -536,7 +535,7 @@ export const scenarios = [
     id: 'nvda-2025-01',
     ticker: 'NVDA',
     name: 'NVIDIA',
-    title: 'NVIDIA a šok jménem DeepSeek',
+    title: 'NVIDIA po zveřejnění DeepSeek R1',
     horizon: 'dny',
     intraday: true,
     peers: ['AMD', 'AVGO', 'MSFT'],
@@ -557,12 +556,12 @@ export const scenarios = [
       {
         title: 'DeepSeek R1',
         body:
-          'Model s otevřenými vahami (licence MIT), výkonem srovnatelný s OpenAI o1 a s API za zlomek ceny. Pokud jde trénovat špičkovou AI s mnohem menším výpočetním výkonem, ' +
-          'může klesnout poptávka po drahých GPU. Protiargument: levnější AI = víc používání = víc výpočtů (Jevonsův paradox).',
+          'Model s otevřenými vahami (licence MIT), v testech srovnatelný s OpenAI o1, s API za zlomek ceny. ' +
+          'V médiích se diskutuje, co nižší náklady na trénink znamenají pro poptávku po GPU – zda klesne, nebo nižší cena AI povede k většímu používání (Jevonsův paradox).',
       },
       {
         title: 'Výsledky Q3 FY2025 (20. 11. 2024)',
-        body: 'Tržby 35,1 mld. USD (+94 %), data center 30,8 mld. USD. Výhled na Q4 37,5 mld. USD ±2 %. Poptávka po čipech Blackwell podle vedení výrazně převyšuje nabídku.',
+        body: 'Tržby 35,1 mld. USD (+94 %), data center 30,8 mld. USD. Výhled na Q4 37,5 mld. USD ±2 %. Vedení uvedlo, že poptávka po čipech Blackwell převyšuje nabídku.',
       },
       {
         title: 'Investice do AI',
@@ -591,7 +590,7 @@ export const scenarios = [
     id: 'aapl-2025-04',
     ticker: 'AAPL',
     name: 'Apple',
-    title: 'Apple a celní „Den osvobození“',
+    title: 'Apple po oznámení cel (duben 2025)',
     horizon: 'dny',
     intraday: true,
     peers: ['MSFT', 'AMZN', 'DELL'],
@@ -601,9 +600,9 @@ export const scenarios = [
     situation:
       'Je večer 2. dubna 2025. Prezident Trump po zavření burzy oznámil „reciproční“ cla: základních 10 % na veškerý dovoz a vyšší sazby pro desítky zemí – ' +
       'Čína dalších 34 % (navíc k už platným 20 %), Vietnam 46 %, Indie 26 %. Apple vyrábí většinu iPhonů v Číně, část v Indii, další produkty ve Vietnamu. ' +
-      'Futures na akciové indexy po oznámení prudce padají.',
+      'Futures na akciové indexy po oznámení klesají.',
     events: [
-      { date: '2025-01-30', label: 'Q1 FY25: rekordní tržby, Čína −11 %' },
+      { date: '2025-01-30', label: 'Výsledky Q1 FY25' },
       { date: '2025-02-24', label: 'Apple slibuje 500 mld. USD investic v USA' },
       { date: '2025-03-07', label: 'Odklad chytřejší Siri' },
     ],
@@ -615,12 +614,11 @@ export const scenarios = [
       {
         title: 'Co cla znamenají pro Apple',
         body:
-          'Pokud by Apple nezvedl ceny, cla by výrazně snížila jeho marže. Zdražení iPhonu zase může srazit poptávku. Otázky: dostane Apple výjimku jako v roce 2019? ' +
-          'Odpoví Čína odvetnými cly? Jak rychle lze přesunout výrobu do Indie?',
+          'Cla se týkají dovozu z Číny, Indie a Vietnamu, kde Apple vyrábí. V roce 2019 Apple pro část produktů výjimku z cel získal. Čína v minulosti na americká cla odpovídala vlastními.',
       },
       {
         title: 'Valuace',
-        body: 'Apple se obchoduje za více než 30násobek zisku – trh za něj platí prémii za stabilitu. Prudká změna výhledu může tuto prémii rychle snížit.',
+        body: 'Apple se obchoduje za více než 30násobek zisku za posledních 12 měsíců.',
       },
     ],
     outcome: {
@@ -638,14 +636,14 @@ export const scenarios = [
     id: 'amzn-2022-04',
     ticker: 'AMZN',
     name: 'Amazon',
-    title: 'Amazon po covidovém boomu',
+    title: 'Amazon před výsledky Q1 2022',
     horizon: '2 měsíce',
     peers: ['WMT', 'GOOGL', 'MSFT'],
     historyStart: '2020-06-01',
     decisionDate: '2022-04-28',
     endDate: '2022-06-30',
     situation:
-      'Je 28. dubna 2022 odpoledne. Amazon dnes po zavření burzy zveřejní výsledky za Q1. Inflace v USA je nejvyšší za 40 let, Fed začal zvedat sazby a technologické akcie v dubnu prudce padají. ' +
+      'Je 28. dubna 2022 odpoledne. Amazon dnes po zavření burzy zveřejní výsledky za Q1. Inflace v USA je nejvyšší za 40 let, Fed v březnu poprvé zvýšil sazby a Nasdaq v dubnu klesá. ' +
       'Amazon během pandemie zdvojnásobil logistickou síť a teď řeší vyšší náklady na mzdy a dopravu. V březnu ohlásil split akcií 20:1 a zpětný odkup za 10 mld. USD.',
     events: [
       { date: '2021-07-05', label: 'Andy Jassy novým CEO' },
@@ -657,14 +655,14 @@ export const scenarios = [
       {
         title: 'Výsledky Q4 2021 (3. 2. 2022)',
         body:
-          'Tržby 137,4 mld. USD (+9 %), AWS 17,8 mld. (+40 %). Zisk nafoukl přecenění podílu v Rivianu. Amazon zdražil Prime v USA ze 119 na 139 USD ročně. Akcie den poté +13,5 %.',
+          'Tržby 137,4 mld. USD (+9 %), AWS 17,8 mld. (+40 %). Zisk zahrnuje přecenění podílu v Rivianu. Amazon zdražil Prime v USA ze 119 na 139 USD ročně. Akcie den poté +13,5 %.',
       },
       {
         title: 'Náklady a kapacity',
         body:
-          'Vedení přiznává, že po covidu má více skladů a lidí, než potřebuje, a náklady na dopravu a mzdy rostou. Akcie Rivianu od IPO výrazně spadly – Amazon bude vykazovat ztrátu z přecenění.',
+          'Vedení uvedlo, že po covidu má vyšší kapacity skladů a zaměstnanců a že rostou náklady na dopravu a mzdy. Akcie Rivianu jsou výrazně pod cenou z listopadu 2021; podíl Amazon přeceňuje každý kvartál.',
       },
-      { title: 'Trh', body: 'Nasdaq je od listopadového maxima zhruba o pětinu níž. Investoři utíkají od růstových firem kvůli rostoucím sazbám.' },
+      { title: 'Trh', body: 'Nasdaq je od listopadového maxima zhruba o pětinu níž. Sazby Fedu a výnosy dluhopisů rostou.' },
     ],
     outcome: {
       summary:
@@ -681,7 +679,7 @@ export const scenarios = [
     id: 'snap-2022-05',
     ticker: 'SNAP',
     name: 'Snap',
-    title: 'Snap varuje uprostřed kvartálu',
+    title: 'Snap po dopisu CEO (květen 2022)',
     horizon: '2 měsíce',
     peers: ['META', 'PINS', 'GOOGL'],
     historyStart: '2021-01-04',
@@ -692,8 +690,8 @@ export const scenarios = [
       'a tržby i provozní zisk za Q2 budou pod spodní hranicí výhledu, který dala před měsícem. Firma zpomalí nábor.',
     events: [
       { date: '2021-09-24', label: 'Akcie na historickém maximu' },
-      { date: '2021-10-21', label: 'Q3: dopad Apple ATT, akcie −27 %' },
-      { date: '2022-02-03', label: 'Q4: první čtvrtletní zisk, akcie +59 %' },
+      { date: '2021-10-21', label: 'Výsledky Q3 2021, akcie −27 %' },
+      { date: '2022-02-03', label: 'Výsledky Q4 2021, akcie +59 %' },
       { date: '2022-04-21', label: 'Q1 2022 výsledky' },
     ],
     articles: [
@@ -705,9 +703,9 @@ export const scenarios = [
       {
         title: 'Co znamená varování',
         body:
-          'Jen měsíc po výhledu ho firma ruší. Snap žije z reklamy – když on vidí slabší poptávku inzerentů, týká se to možná i Mety, Pinterestu nebo Googlu.',
+          'Firma mění výhled měsíc po jeho vydání. Většinu tržeb tvoří reklama; podobně jsou na reklamě závislé i Meta, Pinterest nebo Alphabet.',
       },
-      { title: 'Konkurence', body: 'TikTok bere pozornost mladých uživatelů, Meta tlačí Reels. Apple ATT omezil cílení reklam.' },
+      { title: 'Konkurence', body: 'TikTok a Meta Reels cílí na podobné publikum. Apple ATT omezil cílení reklam.' },
     ],
     outcome: {
       summary:
@@ -724,32 +722,32 @@ export const scenarios = [
     id: 'tgt-2022-05',
     ticker: 'TGT',
     name: 'Target',
-    title: 'Target a zaseklé zásoby',
+    title: 'Target před výsledky Q1 2022',
     horizon: '2 měsíce',
     peers: ['WMT', 'COST', 'BBY'],
     historyStart: '2021-01-04',
     decisionDate: '2022-05-17',
     endDate: '2022-07-29',
     situation:
-      'Je večer 17. května 2022. Target zítra před otevřením burzy zveřejní výsledky za Q1. Dnes ráno Walmart vykázal výrazně nižší zisk kvůli nákladům na palivo, mzdy a přebytečným zásobám ' +
-      'a jeho akcie spadla o 11 % – nejvíc od roku 1987. Inflace mění to, co lidé kupují: méně televizí a nábytku, víc jídla a benzínu.',
+      'Je večer 17. května 2022. Target zítra před otevřením burzy zveřejní výsledky za Q1. Dnes ráno Walmart vykázal nižší zisk, jako důvody uvedl náklady na palivo, mzdy a vyšší zásoby. ' +
+      'Jeho akcie klesla o 11 %. Inflace v USA je nejvyšší za 40 let.',
     events: [
-      { date: '2021-11-17', label: 'Q3 2021: rekordní tržby' },
-      { date: '2022-03-01', label: 'Q4 2021: silné prázdniny' },
-      { date: '2022-05-17', label: 'Walmart vykázal slabý zisk, −11 %' },
+      { date: '2021-11-17', label: 'Výsledky Q3 2021' },
+      { date: '2022-03-01', label: 'Výsledky Q4 2021' },
+      { date: '2022-05-17', label: 'Walmart: výsledky Q1, akcie −11 %' },
     ],
     articles: [
       {
         title: 'Výsledky Q4 2021 (1. 3. 2022)',
         body:
-          'Silná prázdninová sezóna, tržby rekordní. Target zvýšil dividendu a oznámil odkup akcií za 15 mld. USD. Na rok 2022 čekal provozní marži kolem 8 %.',
+          'Rekordní tržby za prázdninovou sezónu. Target zvýšil dividendu a oznámil odkup akcií za 15 mld. USD. Na rok 2022 čekal provozní marži kolem 8 %.',
       },
       {
         title: 'Walmart (17. 5. 2022)',
         body:
-          'Největší konkurent snížil roční výhled zisku. Důvody: palivo, přesčasy, dražší doprava a zásoby zboží, které se teď neprodává. Zásoby Walmartu meziročně +33 %.',
+          'Největší konkurent snížil roční výhled zisku. Uvedené důvody: palivo, přesčasy, dražší doprava a vyšší zásoby. Zásoby Walmartu meziročně +33 %.',
       },
-      { title: 'Spotřebitel', body: 'Ceny potravin a energií rostou nejrychleji za desítky let. Lidé omezují nákupy elektroniky, domácích potřeb a oblečení, které během covidu kupovali hodně.' },
+      { title: 'Spotřebitel', body: 'Ceny potravin a energií rostou nejrychleji za desítky let. Podle obchodníků se nákupy přesouvají od elektroniky a vybavení domácnosti k potravinám.' },
     ],
     outcome: {
       summary:
@@ -766,7 +764,7 @@ export const scenarios = [
     id: 'ba-2024-01',
     ticker: 'BA',
     name: 'Boeing',
-    title: 'Boeing a utržené dveře',
+    title: 'Boeing po incidentu letu Alaska 1282',
     horizon: '2 měsíce',
     peers: ['RTX', 'GE', 'LMT'],
     historyStart: '2022-01-03',
@@ -774,7 +772,7 @@ export const scenarios = [
     endDate: '2024-03-15',
     situation:
       'Je večer v pátek 5. ledna 2024. Letadlu Alaska Airlines (Boeing 737 MAX 9) se krátce po startu z Portlandu ve výšce asi 5 km utrhl panel dveří v trupu. ' +
-      'Letadlo bezpečně přistálo, nikdo nezemřel. Boeing se po krizi 737 MAX z let 2019–2020 snaží obnovit důvěru a zvyšovat výrobu.',
+      'Letadlo bezpečně přistálo, nikdo nezemřel. Boeing po uzemnění 737 MAX v letech 2019–2020 postupně zvyšuje výrobu.',
     events: [
       { date: '2023-04-13', label: 'Vada od dodavatele Spirit AeroSystems' },
       { date: '2023-10-25', label: 'Q3 2023 výsledky' },
@@ -784,13 +782,13 @@ export const scenarios = [
       {
         title: 'Výsledky Q3 2023 (25. 10. 2023)',
         body:
-          'Tržby rostou, ale Boeing je stále ve ztrátě. Firma potvrdila cíl volného cash flow 3–5 mld. USD na rok 2023 a plán zvýšit výrobu 737 na 38 kusů měsíčně a dál.',
+          'Tržby meziročně rostou, Boeing vykazuje ztrátu. Firma potvrdila cíl volného cash flow 3–5 mld. USD na rok 2023 a plán zvýšit výrobu 737 na 38 kusů měsíčně a dál.',
       },
       {
         title: 'Co může následovat',
-        body: 'Úřad FAA může letadla uzemnit, nařídit kontroly nebo omezit výrobu. Aerolinky mohou žádat kompenzace a odkládat objednávky. Na druhé straně má Boeing objednávky na roky dopředu.',
+        body: 'O dalším postupu rozhoduje úřad FAA a vyšetřovatelé NTSB. Boeing má podle svých výkazů nevyřízené objednávky na několik let výroby.',
       },
-      { title: 'Konkurence', body: 'Airbus je jediný velký konkurent a má také plnou výrobu na roky. Zákazníci nemohou snadno přejít.' },
+      { title: 'Konkurence', body: 'Hlavní konkurent je Airbus, který má také nevyřízené objednávky na několik let.' },
     ],
     outcome: {
       summary:

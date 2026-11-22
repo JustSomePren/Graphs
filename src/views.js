@@ -1,4 +1,4 @@
-import { el, fmtBig, fmtDate, fmtPct, fmtPrice, fmtX } from './format.js'
+import { el, fmtBig, fmtDate, fmtMonth, fmtPct, fmtPrice, fmtX } from './format.js'
 import { buildModel } from './model.js'
 import { createChart, ZOOMS } from './chart.js'
 import { scorePrediction } from './score.js'
@@ -139,7 +139,7 @@ function resultCard(s, model, score) {
 function analysisTabs(s, model) {
   const panes = {
     Situace: () => situationPane(s, model),
-    Data: () => dataPane(s.metrics),
+    Data: () => dataPane(s),
     Konkurence: () => peersPane(s),
     Rozšířené: () => extendedPane(s, model),
   }
@@ -171,37 +171,144 @@ function situationPane(s, model) {
 
 const fact = (label, value, hint) => el('div', { class: 'fact' }, el('span', {}, label), el('b', {}, value), hint ? el('small', {}, hint) : null)
 
-function dataPane(m) {
-  const quarters = m.quarterlyRevenue ?? []
-  const maxQ = Math.max(...quarters.map((q) => q.value), 1)
+const section = (title, open, ...children) => el('details', { class: 'section', open }, el('summary', {}, title), ...children)
+const facts = (...items) => el('div', { class: 'facts' }, items)
+const pe = (r) => (r.pe ? fmtX(r.pe) : r.epsTtm < 0 ? 'ztráta' : '–')
+const rate = (x) => (x == null ? '–' : x.toLocaleString('cs-CZ', { maximumFractionDigits: 2 }) + ' %')
+const signed = (x) => (x == null ? '' : (x > 0 ? '+' : '') + x.toLocaleString('cs-CZ', { maximumFractionDigits: 2 }) + ' p.b.')
+
+function dataPane(s) {
+  const m = s.metrics
   return el(
     'div',
     {},
-    el(
-      'div',
-      { class: 'facts' },
-      fact('Cena', fmtPrice(m.price)),
-      fact('Tržní kap.', fmtBig(m.marketCap)),
-      fact('P/E (TTM)', m.pe ? fmtX(m.pe) : m.epsTtm < 0 ? 'ztráta' : '–', 'GAAP, posl. 12 měs.'),
-      fact('Forward P/E', 'n/a', 'konsenzus je licencovaný'),
-      fact('P/S', fmtX(m.ps)),
-      fact('EPS (TTM)', m.epsTtm != null ? fmtPrice(m.epsTtm) : '–'),
-      fact('Tržby (TTM)', fmtBig(m.revenueTtm), `meziročně ${fmtPct(m.revenueTtmGrowth)}`),
-      fact('Posl. kvartál', fmtBig(m.lastQuarterRevenue), `${m.lastQuarterEnd ? fmtDate(m.lastQuarterEnd) : ''} · ${fmtPct(m.lastQuarterGrowth)} r/r`),
-      fact('Čistá marže', fmtPct(m.netMargin, false)),
-      fact('Hotovost', fmtBig(m.cash)),
-      fact('52t max / min', `${fmtPrice(m.high52)} / ${fmtPrice(m.low52)}`),
-      fact('Změna 1M / 6M / 1R', `${fmtPct(m.change1m)} / ${fmtPct(m.change6m)} / ${fmtPct(m.change1y)}`),
+    section(
+      'Valuace',
+      true,
+      facts(
+        fact('Tržní kap.', fmtBig(m.marketCap)),
+        fact('EV', fmtBig(m.ev), 'kap. + dluh − hotovost'),
+        fact('P/E (TTM)', pe(m), 'GAAP, posl. 12 měs.'),
+        fact('Forward P/E', 'n/a', 'konsenzus je licencovaný'),
+        fact('P/S', fmtX(m.ps)),
+        fact('EV / tržby', fmtX(m.evSales)),
+        fact('P/B', fmtX(m.pb), 'cena / vlastní kapitál'),
+        fact('FCF yield', fmtPct(m.fcfYield, false), 'volné cash flow / kap.'),
+      ),
     ),
-    quarters.length
-      ? el(
-          'div',
-          { class: 'quarters' },
-          el('h4', {}, 'Tržby po kvartálech'),
-          el('div', { class: 'qbars' }, quarters.map((q) => el('div', { class: 'qbar', title: fmtBig(q.value) }, el('i', { style: `--h:${(q.value / maxQ) * 100}%` }), el('small', {}, q.end.slice(2, 7).replace('-', '/'))))),
-        )
+    section(
+      'Růst',
+      true,
+      facts(
+        fact('Tržby (TTM)', fmtBig(m.revenueTtm), `r/r ${fmtPct(m.revenueTtmGrowth)}`),
+        fact('Posl. kvartál', fmtBig(m.lastQuarterRevenue), `${fmtPct(m.lastQuarterGrowth)} r/r · ${fmtPct(m.lastQuarterQoq)} q/q`),
+        fact('EPS (TTM)', m.epsTtm != null ? fmtPrice(m.epsTtm) : '–', m.epsTtmGrowth != null ? `r/r ${fmtPct(m.epsTtmGrowth)}` : null),
+        fact('Zásoby r/r', fmtPct(m.inventoryGrowth), 'rychlý růst = riziko'),
+      ),
+      quartersTable(m.quarterly ?? []),
+    ),
+    section(
+      'Ziskovost',
+      false,
+      facts(
+        fact('Hrubá marže', fmtPct(m.grossMargin, false)),
+        fact('Provozní marže', fmtPct(m.operatingMargin, false)),
+        fact('Čistá marže', fmtPct(m.netMargin, false)),
+        fact('FCF marže', fmtPct(m.fcfMargin, false)),
+        fact('ROE', fmtPct(m.roe, false), 'zisk / vlastní kapitál'),
+        fact('R&D', fmtPct(m.rndShare, false), 'podíl na tržbách'),
+        fact('Odměny v akciích', fmtPct(m.sbcShare, false), 'podíl na tržbách'),
+      ),
+    ),
+    section(
+      'Rozvaha a akcionáři',
+      false,
+      facts(
+        fact('Hotovost + investice', fmtBig(m.cashAndInvestments)),
+        fact('Dluh', fmtBig(m.debt)),
+        fact('Volné cash flow', fmtBig(m.fcfTtm), 'posl. 12 měs.'),
+        fact('Zpětné odkupy', fmtBig(m.buybacksTtm), 'posl. 12 měs.'),
+        fact('Dividendy', fmtBig(m.dividendsTtm), 'posl. 12 měs.'),
+        fact('Počet akcií r/r', fmtPct(m.sharesGrowth), '+ ředění, − odkupy'),
+      ),
+    ),
+    section(
+      'Akcie a trh',
+      false,
+      facts(
+        fact('52t max / min', `${fmtPrice(m.high52)} / ${fmtPrice(m.low52)}`, `od maxima ${fmtPct(m.fromHigh)}`),
+        fact('Změna 1M / 6M / 1R', `${fmtPct(m.change1m)} / ${fmtPct(m.change6m)} / ${fmtPct(m.change1y)}`),
+        fact('vs. průměr 50 / 200 dní', `${fmtPct(m.vsMa50)} / ${fmtPct(m.vsMa200)}`),
+        fact('Volatilita', fmtPct(m.volatility, false), 'roční, z posl. 60 dní'),
+        fact('Beta', m.beta?.toLocaleString('cs-CZ', { maximumFractionDigits: 2 }) ?? '–', 'citlivost na S&P 500'),
+        fact('Denní objem', fmtBig(m.dollarVolume), 'průměr 30 dní'),
+      ),
+    ),
+    s.insiders ? insidersSection(s.insiders) : null,
+    s.macro ? macroSection(s.macro) : null,
+    el('p', { class: 'muted' }, 'Zdroje: výkazy 10-Q/10-K a formuláře 4 podané na SEC do data rozhodnutí, makro data FRED (Fed St. Louis).'),
+  )
+}
+
+function quartersTable(quarters) {
+  if (!quarters.length) return null
+  const maxQ = Math.max(...quarters.map((q) => q.revenue))
+  return el(
+    'div',
+    { class: 'quarters' },
+    el('div', { class: 'qbars' }, quarters.map((q) => el('div', { class: 'qbar' }, el('i', { style: `--h:${(q.revenue / maxQ) * 100}%` }), el('small', {}, q.end.slice(2, 7).replace('-', '/'))))),
+    table(
+      ['Kvartál', 'Tržby', 'r/r', 'Hrubá m.', 'Provoz. m.', 'EPS'],
+      [...quarters].reverse().map((q) => [
+        q.end.slice(2, 7).replace('-', '/'),
+        fmtBig(q.revenue),
+        { text: fmtPct(q.growth), cls: q.growth >= 0 ? 'up' : 'down' },
+        fmtPct(q.grossMargin, false),
+        fmtPct(q.operatingMargin, false),
+        q.eps != null ? fmtPrice(q.eps) : '–',
+      ]),
+    ),
+  )
+}
+
+function insidersSection(ins) {
+  const summary = (value, people) => (value ? `${fmtBig(value)} · ${people} ${people === 1 ? 'osoba' : people < 5 ? 'osoby' : 'osob'}` : 'žádné')
+  return section(
+    'Insideři (6 měsíců)',
+    false,
+    facts(fact('Nákupy na trhu', summary(ins.buyValue, ins.buyPeople)), fact('Prodeje na trhu', summary(ins.sellValue, ins.sellPeople))),
+    ins.topSellers.length
+      ? el('ul', { class: 'plain' }, ins.topSellers.map((t) => el('li', {}, el('b', {}, t.name), ` (${t.title || 'insider'}) – prodal za ${fmtBig(t.value)}`)))
       : null,
-    el('p', { class: 'muted' }, 'Zdroj: výkazy 10-Q/10-K podané na SEC do data rozhodnutí.'),
+    el('p', { class: 'muted' }, 'Prodeje vedení jsou běžné (často plánované dopředu, daně z odměn). Nákupy insiderů za vlastní peníze jsou vzácnější signál.'),
+  )
+}
+
+function macroSection(mc) {
+  const item = (label, v, hint) => fact(label, rate(v.value), [v.before != null ? `před 6 měs. ${rate(v.before)} (${signed(v.value - v.before)})` : null, hint].filter(Boolean).join(' · '))
+  return section(
+    'Makro',
+    false,
+    facts(
+      item('Úrok Fedu', mc.fedFunds),
+      item('10letý dluhopis USA', mc.rate10y),
+      item('Spread 10Y − 2Y', mc.spread10y2y, mc.spread10y2y.value < 0 ? 'inverzní křivka' : null),
+      item('Nezaměstnanost', mc.unemployment),
+      fact('Inflace (CPI r/r)', rate(mc.inflation.value), `za ${fmtMonth(mc.inflation.asOf)}`),
+    ),
+  )
+}
+
+function table(head, rows, rowClass = () => '') {
+  return el(
+    'div',
+    { class: 'table-wrap' },
+    el(
+      'table',
+      {},
+      el('thead', {}, el('tr', {}, head.map((h) => el('th', {}, h)))),
+      el('tbody', {}, rows.map((cells, i) => el('tr', { class: rowClass(i) }, cells.map((c) => el('td', { class: c?.cls ?? '' }, c?.text ?? c))))),
+    ),
   )
 }
 
@@ -210,29 +317,23 @@ function peersPane(s) {
   const name = (r) => (r.ticker === '^GSPC' ? 'S&P 500' : r.ticker)
   return el(
     'div',
-    { class: 'table-wrap' },
-    el(
-      'table',
-      {},
-      el('thead', {}, el('tr', {}, ['', '1R', 'P/E', 'P/S', 'Růst', 'Marže'].map((h) => el('th', {}, h)))),
-      el(
-        'tbody',
-        {},
-        rows.map((r, i) =>
-          el(
-            'tr',
-            { class: i === 0 ? 'me' : '' },
-            el('td', {}, name(r)),
-            el('td', { class: r.change1y >= 0 ? 'up' : 'down' }, fmtPct(r.change1y)),
-            el('td', {}, r.pe ? fmtX(r.pe) : r.epsTtm < 0 ? 'ztr.' : '–'),
-            el('td', {}, fmtX(r.ps)),
-            el('td', {}, fmtPct(r.revenueTtmGrowth)),
-            el('td', {}, fmtPct(r.netMargin, false)),
-          ),
-        ),
-      ),
+    {},
+    table(
+      ['', '1R', 'P/E', 'P/S', 'EV/T', 'Růst', 'Hrubá m.', 'Provoz. m.', 'Beta'],
+      rows.map((r) => [
+        name(r),
+        { text: fmtPct(r.change1y), cls: r.change1y >= 0 ? 'up' : 'down' },
+        r.ticker === '^GSPC' ? '–' : pe(r),
+        fmtX(r.ps),
+        fmtX(r.evSales),
+        fmtPct(r.revenueTtmGrowth),
+        fmtPct(r.grossMargin, false),
+        fmtPct(r.operatingMargin, false),
+        r.beta != null ? r.beta.toLocaleString('cs-CZ', { maximumFractionDigits: 2 }) : '–',
+      ]),
+      (i) => (i === 0 ? 'me' : ''),
     ),
-    el('p', { class: 'muted' }, 'Hodnoty k datu rozhodnutí. Růst = tržby za posl. 12 měsíců meziročně.'),
+    el('p', { class: 'muted' }, 'Hodnoty k datu rozhodnutí. Růst = tržby za posl. 12 měsíců meziročně, EV/T = EV / tržby.'),
   )
 }
 

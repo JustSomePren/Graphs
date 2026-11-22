@@ -39,11 +39,23 @@ Instalace na telefon: pošli si APK do telefonu a povol instalaci z neznámých 
 `npm run data` znovu stáhne data a vytvoří `src/data/scenarios.json`. Texty scénářů jsou v `scenarios/scenarios.mjs` –
 nový scénář = nový objekt v tomto souboru (ticker, období, situace, články, vysvětlení výsledku).
 
-- **Fundamenty** (tržby, EPS, zisk, hotovost, data výsledků) – SEC EDGAR API, veřejná data bez licence.
-  Používají se jen výkazy podané **do data rozhodnutí**, takže nevidíš nic z budoucnosti.
-- **Ceny** – denní zavírací ceny z veřejného chart endpointu Yahoo Finance, přepočtené na úroveň před pozdějšími splity
-  (cena je taková, jakou investor tehdy opravdu viděl). Jde o neoficiální endpoint – pro veřejné vydání hry by bylo lepší nahradit ho licencovaným zdrojem.
-- **Forward P/E a doporučení analytiků** se nezobrazují – konsenzuální odhady jsou licencovaná data (FactSet, LSEG, Zacks…).
-  Očekávání trhu jsou proto zmíněna jen v článcích, tak jak o nich veřejně psala média.
+Všechna data jsou jen taková, jaká byla **veřejně známá k datu rozhodnutí** – nic z budoucnosti.
+
+| Zdroj | Co z něj hra bere | Licence |
+|---|---|---|
+| **SEC EDGAR** – výkazy 10-Q/10-K (XBRL API) | tržby, marže, EPS, cash flow, dluh, hotovost, zpětné odkupy, dividendy, počet akcií, zásoby, kvartální přehled | volné dílo (US government) |
+| **SEC EDGAR** – formuláře 8-K | data vyhlášení výsledků, odkazy na tiskové zprávy | volné dílo |
+| **SEC EDGAR** – formuláře 4 | nákupy a prodeje insiderů za 6 měsíců | volné dílo |
+| **FRED** (Fed St. Louis) | úrok Fedu, 10letý výnos, spread 10Y−2Y, inflace, nezaměstnanost | volné dílo (data Fedu, ministerstva financí a BLS) |
+| **Yahoo Finance** (veřejný chart endpoint) | denní ceny a objemy → z nich se počítá volatilita, beta, klouzavé průměry, výkonnost | neoficiální, bez licence pro redistribuci |
+
+Měsíční makro údaje se berou se zpožděním publikace (CPI ~45 dní), kvartální čísla jen z výkazů podaných do data rozhodnutí.
+
+**Co zdarma k dispozici není:** historický konsenzus analytiků (forward P/E, počty buy/hold/sell) prodávají FactSet, LSEG, S&P a Zacks,
+historický short interest burzy (Nasdaq/NYSE) také. Free API (Finnhub, Alpha Vantage, Tiingo) mají buď jen aktuální hodnoty, nebo vyžadují klíč
+a jejich podmínky nedovolují data šířit v aplikaci. Očekávání trhu jsou proto jen v článcích, tak jak o nich psala média.
+
+Ceny: oficiální licencovaný zdroj zdarma neexistuje – ceny vlastní burzy. Pro soukromou hru stačí Yahoo, pro veřejné vydání by bylo
+potřeba nahradit ho placeným zdrojem (např. Polygon, Tiingo) – stačí upravit `scripts/lib/prices.mjs`.
 
 Nejde o investiční doporučení.

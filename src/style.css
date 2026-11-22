@@ -446,3 +446,29 @@ tr.me td {
 .result h3 {
   margin-top: 14px;
 }
+
+.section {
+  margin-bottom: 10px;
+}
+
+.section summary {
+  font-weight: 700;
+  padding: 8px 2px;
+  cursor: pointer;
+}
+
+.section .quarters {
+  margin-top: 10px;
+}
+
+.plain {
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+td:first-child,
+th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+}

@@ -1,0 +1,32 @@
+{
+  "name": "kam-to-pujde",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "data": "node scripts/build-data.mjs",
+    "android": "vite build && npx cap sync android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JustSomePren/Graphs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JustSomePren/Graphs/issues"
+  },
+  "homepage": "https://github.com/JustSomePren/Graphs#readme",
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  },
+  "private": true,
+  "type": "module"
+}

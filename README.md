@@ -20,6 +20,16 @@ npm install
 npm run dev        # webová verze na http://localhost:5173 (i z mobilu ve stejné síti)
 ```
 
+## Testy
+
+```bash
+npm test           # jednotkové testy: skórování, výpočty z výkazů, kvalita dat všech scénářů
+npm run test:e2e   # projde všechny scénáře v prohlížeči na rozlišení Pixelu (vyžaduje Playwright)
+```
+
+Kontrola kvality dat (`scripts/lib/validate.mjs`) běží i při `npm run data` – hlídá díry v cenách, špatně
+přepočtené splity, nesmyslné marže a hlavně, aby se do scénáře nedostala žádná informace z budoucnosti.
+
 ## Android (Pixel)
 
 APK se sestaví automaticky v GitHub Actions (záložka *Actions* → poslední běh → artefakt `kam-to-pujde-apk`).
@@ -44,7 +54,7 @@ Všechna data jsou jen taková, jaká byla **veřejně známá k datu rozhodnut�
 | Zdroj | Co z něj hra bere | Licence |
 |---|---|---|
 | **SEC EDGAR** – výkazy 10-Q/10-K (XBRL API) | tržby, marže, EPS, cash flow, dluh, hotovost, zpětné odkupy, dividendy, počet akcií, zásoby, kvartální přehled | volné dílo (US government) |
-| **SEC EDGAR** – formuláře 8-K | data vyhlášení výsledků, odkazy na tiskové zprávy | volné dílo |
+| **SEC EDGAR** – formuláře 8-K | data vyhlášení výsledků (rozlišuje i předběžná čísla – dodávky, varování), odkazy na tiskové zprávy | volné dílo |
 | **SEC EDGAR** – formuláře 4 | nákupy a prodeje insiderů za 6 měsíců | volné dílo |
 | **FRED** (Fed St. Louis) | úrok Fedu, 10letý výnos, spread 10Y−2Y, inflace, nezaměstnanost | volné dílo (data Fedu, ministerstva financí a BLS) |
 | **Yahoo Finance** (veřejný chart endpoint) | denní ceny a objemy → z nich se počítá volatilita, beta, klouzavé průměry, výkonnost | neoficiální, bez licence pro redistribuci |

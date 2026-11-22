@@ -4,6 +4,7 @@ import { scenarios } from '../scenarios/scenarios.mjs'
 import { prices, priceStats } from './lib/prices.mjs'
 import { earningsDates, fundamentals, insiders, withValuation } from './lib/edgar.mjs'
 import { macro } from './lib/macro.mjs'
+import { validateScenario } from './lib/validate.mjs'
 
 async function company(ticker, date, market) {
   const px = await prices(ticker, date, date)
@@ -44,6 +45,8 @@ async function build() {
       macro: await macro(s.decisionDate),
     })
   }
+  const problems = out.flatMap((s) => validateScenario(JSON.parse(JSON.stringify(s, (k, v) => round(v)))))
+  problems.forEach((p) => console.warn('⚠', p))
   await fs.mkdir('src/data', { recursive: true })
   await fs.writeFile('src/data/scenarios.json', JSON.stringify(out, (k, v) => round(v)))
   console.log('Hotovo:', out.length, 'scénářů')

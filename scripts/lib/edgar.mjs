@@ -29,7 +29,7 @@ const C = {
 
 // Fakta, která byla veřejně známá k danému datu (podaná v 10-Q/10-K do toho dne)
 // scale(f) umožní přepočítat hodnotu (např. EPS po splitu) na bázi k datu rozhodnutí
-function factsKnownAt(g, concepts, unit, date, scale = () => 1) {
+export function factsKnownAt(g, concepts, unit, date, scale = () => 1) {
   const byPeriod = new Map()
   for (const concept of concepts) {
     for (const f of g?.[concept]?.units?.[unit] ?? []) {
@@ -48,7 +48,7 @@ const isQuarter = (days) => days > 75 && days < 105
 
 // Čtvrtletní hodnoty. Cash flow firmy vykazují jen kumulativně (3, 6, 9, 12 měsíců),
 // proto se kvartál dopočítá jako rozdíl dvou po sobě jdoucích kumulativních hodnot.
-function quarters(facts) {
+export function quarters(facts) {
   const q = new Map()
   const flows = facts.filter((f) => f.start)
   for (const f of flows) if (isQuarter(durationDays(f))) q.set(f.end, f)
@@ -67,7 +67,7 @@ const latestInstant = (facts) => facts.filter((f) => !f.start).sort((a, b) => a.
 const nearEnd = (qs, end) => qs.find((x) => Math.abs(toTs(x.end) - toTs(end)) < 20 * DAY)
 const yearBefore = (end) => new Date(toTs(end) - 365 * DAY).toISOString().slice(0, 10)
 
-function ttm(qs, end = qs.at(-1)?.end) {
+export function ttm(qs, end = qs.at(-1)?.end) {
   const upTo = qs.filter((x) => end && toTs(x.end) <= toTs(end) + 20 * DAY)
   if (upTo.length < 4) return null
   const last4 = upTo.slice(-4)
@@ -111,8 +111,12 @@ export async function fundamentals(ticker, date, splits) {
   const t = (qs) => ttm(qs, end)
   const tPrev = (qs) => ttm(qs, yearBefore(end))
   const revenueTtm = t(rev)
-  const epsTtm = t(eps)
   const netIncomeTtm = t(ni)
+  // Když chybí čtvrtletní EPS (např. Alphabet vykazoval roční EPS jen po třídách akcií),
+  // dopočítáme ho ze zisku a počtu akcií odvozeného z posledního kvartálu
+  const lastEps = nearEnd(eps, end)
+  const lastNi = nearEnd(ni, end)
+  const epsTtm = t(eps) ?? (lastEps?.val && lastNi?.val && netIncomeTtm != null ? netIncomeTtm / (lastNi.val / lastEps.val) : null)
   const fcfTtm = t(ocf) != null && t(capex) != null ? t(ocf) - t(capex) : null
   const cash = instant('cash')?.val ?? null
   const investments = instant('investments')
@@ -138,6 +142,8 @@ export async function fundamentals(ticker, date, splits) {
   return {
     cik,
     lastQuarterEnd: end,
+    reportFiled: rev.at(-1).filed,
+    reportForm: rev.at(-1).form,
     lastQuarterRevenue: rev.at(-1).val,
     lastQuarterGrowth: quarterly.at(-1).growth,
     lastQuarterQoq: growth(rev.at(-1).val, rev.at(-2)?.val),
@@ -208,11 +214,29 @@ async function filings(cik, from, to) {
 
 const folder = (cik, f) => `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${f.accession}/`
 
+// Výsledky (8-K, položka 2.02). Předběžná čísla (dodávky, varování) poznáme tak,
+// že po nich ještě před výkazem 10-Q/10-K přijde další 8-K s výsledky.
 export async function earningsDates(cik, from, to) {
-  const list = (await filings(cik, from, to))
-    .filter((f) => f.form === '8-K' && f.items?.includes('2.02'))
-    .map((f) => ({ date: f.date, afterClose: Number(f.time.slice(11, 13)) >= 16, url: folder(cik, f) }))
-  return [...new Map(list.map((e) => [e.date, e])).values()].sort((a, b) => a.date.localeCompare(b.date))
+  const all = await filings(cik, from, new Date(toTs(to) + 60 * DAY).toISOString().slice(0, 10))
+  return classifyEarnings(all, cik).filter((e) => e.date <= to)
+}
+
+export function classifyEarnings(all, cik) {
+  const reports = all.filter((f) => /^10-[QK]/.test(f.form)).map((f) => f.date).sort()
+  const releases = [...new Map(all.filter((f) => f.form === '8-K' && f.items?.includes('2.02')).map((f) => [f.date, f])).values()].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  )
+  return releases.map((f, i) => {
+    const report = reports.find((d) => d >= f.date)
+    const next = releases[i + 1]
+    const preliminary = Boolean(report && next && next.date <= report)
+    return {
+      date: f.date,
+      afterClose: Number(f.time.slice(11, 13)) >= 16,
+      preliminary,
+      url: folder(cik, f),
+    }
+  })
 }
 
 const tag = (xml, name) => xml.match(new RegExp(`<${name}>\\s*(?:<value>)?([^<]*)`))?.[1]?.trim()

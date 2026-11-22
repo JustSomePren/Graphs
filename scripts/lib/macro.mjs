@@ -20,7 +20,7 @@ async function series(id) {
     .map(([date, v]) => ({ date, value: Number(v) }))
 }
 
-const knownAt = (rows, date, lag) => rows.findLast((r) => toTs(r.date) + lag * DAY <= toTs(date))
+export const knownAt = (rows, date, lag) => rows.findLast((r) => toTs(r.date) + lag * DAY <= toTs(date))
 
 export async function macro(date) {
   const out = {}

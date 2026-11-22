@@ -26,7 +26,8 @@ export function scorePrediction(model, points) {
 
   const checks = [...earningsChecks(model, pred), ...swingChecks(actual, pred, scale)]
   const passed = checks.filter((c) => c.ok).length
-  const bonus = checks.length ? (15 * passed) / checks.length : 0
+  // Bez kontrolních bodů (klidný graf) se bonus odvodí z přesnosti průběhu
+  const bonus = checks.length ? (15 * passed) / checks.length : 15 * Math.exp(-meanError / scale)
 
   return {
     total: Math.round(endScore + pathScore + directionScore),
@@ -88,5 +89,5 @@ function swingChecks(actual, pred, scale) {
       label: `${move > 0 ? 'Růst' : 'Pokles'} ${pct(move)} do ${b.date ? b.date.slice(8, 10) + '. ' + b.date.slice(5, 7) + '.' : 'konce'}`,
     })
   }
-  return turns.length ? out : []
+  return out
 }

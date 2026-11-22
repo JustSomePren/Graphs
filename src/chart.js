@@ -160,7 +160,7 @@ export function createChart(canvas, model, { onChange = () => {} } = {}) {
           ts: Date.parse(e.date + 'T00:00:00Z'),
           kind: 'E',
           future: e.reactionDate > model.s.decisionDate,
-          text: `Výsledky ${fmtDate(e.date)}${e.afterClose ? ' (po zavření)' : ''}`,
+          text: `${e.preliminary ? 'Předběžné údaje' : 'Výsledky'} ${fmtDate(e.date)}${e.afterClose ? ' (po zavření)' : ''}`,
         })),
       ...model.events.map((e) => ({ ts: e.ts, kind: '•', future: e.date > model.s.decisionDate, text: `${fmtDate(e.date)}: ${e.label}` })),
     ]
